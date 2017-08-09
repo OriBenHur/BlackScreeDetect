@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Management.Automation;
+using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 
 namespace BlackScreenDetect
@@ -28,6 +31,7 @@ namespace BlackScreenDetect
             InitializeComponent();
             Windowstate = WindowState;
         }
+
         private void InitializeUi()
         {
             _listBoxWatchedItems.Items.Clear();
@@ -52,7 +56,12 @@ namespace BlackScreenDetect
 
         private static IEnumerable<string> Filtered_List(IList<string> list)
         {
-            return (from name in list let extension = Path.GetExtension(name) where extension != null let ext = extension.ToLower() where ext.Equals(".mp4") || ext.Equals(".avi") || ext.Equals(".mkv") select name).ToList();
+            return (from name in list
+                    let extension = Path.GetExtension(name)
+                    where extension != null
+                    let ext = extension.ToLower()
+                    where ext.Equals(".mp4") || ext.Equals(".avi") || ext.Equals(".mkv")
+                    select name).ToList();
         }
 
         private static IList<string> GetFiles(string path, string pattern)
@@ -71,6 +80,7 @@ namespace BlackScreenDetect
 
             return files;
         }
+
         private void folderToolStripMenuItem_Click(object sender, EventArgs e)
         {
             var fs = new FolderSelectDialog();
@@ -126,6 +136,7 @@ namespace BlackScreenDetect
         }
 
         private bool _initialized;
+
         private void MainForm_Load(object sender, EventArgs e)
         {
             if (_initialized) return;
@@ -172,13 +183,28 @@ namespace BlackScreenDetect
 
             var name = Path.GetFileNameWithoutExtension(e.Argument as string);
             var scriptText =
-                $@"[string]$out = ({ffmpeg}\ffmpeg.exe -i '{e.Argument as string}' -vf blackdetect=d={duration}:pic_th={picThreshold}:pix_th={pixThreshold} -f rawvideo -y nul 2>&1){Environment.NewLine}$out | Out-File $env:TMP\{name}_black.txt{Environment.NewLine}$black = (Get-Content $env:TMP\{name}_black.txt | Select-String -Pattern ""blackdetect""){Environment.NewLine}$black | Out-File $env:TMP\{name}_out.txt";
+                $@"[string]$out = ({ffmpeg}\ffmpeg.exe -i '{e.Argument as string}' -vf blackdetect=d={duration}:pic_th={
+                        picThreshold
+                    }:pix_th={pixThreshold} -f rawvideo -y nul 2>&1){
+                        Environment.NewLine
+                    }$out | Out-File $env:TMP\{name}_black.txt{Environment.NewLine}$black = (Get-Content $env:TMP\{
+                        name
+                    }_black.txt | Select-String -Pattern ""blackdetect""){
+                        Environment.NewLine
+                    }$black | Out-File $env:TMP\{
+                        name
+                    }_out.txt";
             PowerShell psExec = PowerShell.Create();
             psExec.AddScript(scriptText);
             psExec.Invoke();
             psExec.Commands.Clear();
             var output = "";
-            var fpsscriptText = $@"{ffmpeg}\ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 '{e.Argument as string}'";
+            var fpsscriptText =
+                $@"{
+                        ffmpeg
+                    }\ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 '{
+                        e.Argument as string
+                    }'";
             psExec.AddScript(fpsscriptText);
 
             var resulte = psExec.Invoke<string>().ToList();
@@ -234,17 +260,24 @@ namespace BlackScreenDetect
         private static string ConvertToTime(string time)
         {
             //
-            var m = Regex.Match(time, @"\[blackdetect @ [a-zA-Z0-9]{16}\].*black_start:(?<start>.*) black_end:(?<end>.*) black_duration:(?<duration>.*)");
+            var m = Regex.Match(time,
+                @"\[blackdetect @ [a-zA-Z0-9]{16}\].*black_start:(?<start>.*) black_end:(?<end>.*) black_duration:(?<duration>.*)");
             var start = ConvertToTime(double.Parse(m.Groups["start"].Value));
             var end = ConvertToTime(double.Parse(m.Groups["end"].Value));
             //var duration = ConvertToTime(TimeSpan.Parse($"{Convert.ToDateTime(end) - Convert.ToDateTime(start)}").TotalSeconds);
-            return $@"Start Time:{start}        End Time:{end}";//        Duration:{duration}";
+            return $@"Start Time:{start}        End Time:{end}"; //        Duration:{duration}";
         }
 
         private static string ConvertToTime(double time)
         {
             var tmp = time.ToString(CultureInfo.InvariantCulture).Split('.');
-            var miliSeconds = tmp.Length == 1 ? "000" : tmp[1].Length > 2 ? tmp[1].Substring(0,3) : tmp[1].Length > 1 ? tmp[1] + "0" : tmp[1] + "00";
+            var miliSeconds = tmp.Length == 1
+                ? "000"
+                : tmp[1].Length > 2
+                    ? tmp[1].Substring(0, 3)
+                    : tmp[1].Length > 1
+                        ? tmp[1] + "0"
+                        : tmp[1] + "00";
             var t = TimeSpan.FromSeconds(time);
             var tc = $"{t.Hours:D2}:{t.Minutes:D2}:{t.Seconds:D2}.{miliSeconds}";
             return tc;
@@ -253,6 +286,84 @@ namespace BlackScreenDetect
         private void MainForm_Resize(object sender, EventArgs e)
         {
             MainSize = Size;
+        }
+
+        private void _bwUpdate_DoWork(object sender, DoWorkEventArgs e)
+        {
+            var downloadUrl = @"";
+            Version newVersion = null;
+            XElement change = null;
+            const string xmlUrl = @"https://oribenhur.github.io/update.xml";
+            var appVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var appName = Assembly.GetExecutingAssembly().GetName().Name.Replace(" ", "_");
+            //var UpdadeMessageBox = new UpdateMessageBox();
+            try
+            {
+                var doc = XDocument.Load(xmlUrl);
+                foreach (var dm in doc.Descendants(appName))
+                {
+                    var versionElement = dm.Element(@"version");
+                    if (versionElement == null) continue;
+                    var urlelEment = dm.Element(@"url");
+                    if (urlelEment == null) continue;
+                    newVersion = new Version(versionElement.Value);
+                    downloadUrl = urlelEment.Value;
+                    change = dm.Element(@"change_log");
+
+                }
+            }
+            catch (Exception exception)
+            {
+                Invoke(new MethodInvoker(delegate { MessageBox.Show(this, exception.Message); }));
+            }
+
+            if (appVersion.CompareTo(newVersion) < 0)
+            {
+
+                //Debug.Assert(change != null, "change != null");
+                var result = DialogResult.None;
+                Invoke(new MethodInvoker(delegate
+                {
+                    if (change != null)
+                        result = MessageBox.Show(this,
+                            $@"{appName.Replace('_', ' ')} v.{newVersion} is out!{Environment.NewLine}{change.Value}",
+                            @"New Version is avlibale", MessageBoxButtons.YesNo);
+                }));
+
+                if (result == DialogResult.Yes)
+                    Process.Start(downloadUrl);
+
+            }
+            else
+            {
+                if ((bool)e.Argument)
+                {
+                    Invoke(new MethodInvoker(delegate
+                    {
+                        MessageBox.Show(this, @"You Are Running The Last Version.", @"No New Updates");
+                    }));
+                }
+            }
+        }
+
+        private void _miCheckForUpdates_Click(object sender, EventArgs e)
+        {
+            _bwUpdate.RunWorkerAsync(true);
+        }
+
+        private void MainForm_Shown(object sender, EventArgs e)
+        {
+            _bwUpdate.RunWorkerAsync(false);
+        }
+
+        private void _miTechnicalDetails_Click(object sender, EventArgs e)
+        {
+            var appVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var appName = Assembly.GetExecutingAssembly().GetName().Name;
+            var buildDate = File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location).ToLocalTime();
+            var td = new TechnicalDetails(appName, appVersion.ToString(), $@"{buildDate.ToShortDateString()} - {buildDate.ToShortTimeString()}");
+            td.ShowDialog(this);
+
         }
     }
 }

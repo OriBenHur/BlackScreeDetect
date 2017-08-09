@@ -42,6 +42,11 @@
             this._tsBtnProgramSettings = new System.Windows.Forms.ToolStripButton();
             this._bwProcess = new System.ComponentModel.BackgroundWorker();
             this._bwLoading = new System.ComponentModel.BackgroundWorker();
+            this._bwUpdate = new System.ComponentModel.BackgroundWorker();
+            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            this._btAbout = new System.Windows.Forms.ToolStripDropDownButton();
+            this._miCheckForUpdates = new System.Windows.Forms.ToolStripMenuItem();
+            this._miTechnicalDetails = new System.Windows.Forms.ToolStripMenuItem();
             this.panel1.SuspendLayout();
             this._tsMain.SuspendLayout();
             this.SuspendLayout();
@@ -87,7 +92,9 @@
             this._tsBtnRemoveFolder,
             this._tsBtnAddFolder,
             this.toolStripSeparator1,
-            this._tsBtnProgramSettings});
+            this._tsBtnProgramSettings,
+            this.toolStripSeparator2,
+            this._btAbout});
             this._tsMain.Location = new System.Drawing.Point(0, 0);
             this._tsMain.Name = "_tsMain";
             this._tsMain.Size = new System.Drawing.Size(784, 25);
@@ -166,6 +173,41 @@
             // 
             this._bwLoading.DoWork += new System.ComponentModel.DoWorkEventHandler(this._bwLoading_DoWork);
             // 
+            // _bwUpdate
+            // 
+            this._bwUpdate.DoWork += new System.ComponentModel.DoWorkEventHandler(this._bwUpdate_DoWork);
+            // 
+            // toolStripSeparator2
+            // 
+            this.toolStripSeparator2.Name = "toolStripSeparator2";
+            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 25);
+            // 
+            // _btAbout
+            // 
+            this._btAbout.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this._btAbout.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this._miCheckForUpdates,
+            this._miTechnicalDetails});
+            this._btAbout.Image = ((System.Drawing.Image)(resources.GetObject("_btAbout.Image")));
+            this._btAbout.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this._btAbout.Name = "_btAbout";
+            this._btAbout.Size = new System.Drawing.Size(53, 22);
+            this._btAbout.Text = "About";
+            // 
+            // _miCheckForUpdates
+            // 
+            this._miCheckForUpdates.Name = "_miCheckForUpdates";
+            this._miCheckForUpdates.Size = new System.Drawing.Size(173, 22);
+            this._miCheckForUpdates.Text = "Check For Updates";
+            this._miCheckForUpdates.Click += new System.EventHandler(this._miCheckForUpdates_Click);
+            // 
+            // _miTechnicalDetails
+            // 
+            this._miTechnicalDetails.Name = "_miTechnicalDetails";
+            this._miTechnicalDetails.Size = new System.Drawing.Size(173, 22);
+            this._miTechnicalDetails.Text = "Technical Details";
+            this._miTechnicalDetails.Click += new System.EventHandler(this._miTechnicalDetails_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -175,6 +217,7 @@
             this.Name = "MainForm";
             this.Text = "BlackScreenDetect";
             this.Load += new System.EventHandler(this.MainForm_Load);
+            this.Shown += new System.EventHandler(this.MainForm_Shown);
             this.Resize += new System.EventHandler(this.MainForm_Resize);
             this.panel1.ResumeLayout(false);
             this.panel1.PerformLayout();
@@ -199,6 +242,11 @@
         private System.Windows.Forms.ToolStripMenuItem fileToolStripMenuItem;
         private System.ComponentModel.BackgroundWorker _bwProcess;
         private System.ComponentModel.BackgroundWorker _bwLoading;
+        private System.ComponentModel.BackgroundWorker _bwUpdate;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
+        private System.Windows.Forms.ToolStripDropDownButton _btAbout;
+        private System.Windows.Forms.ToolStripMenuItem _miCheckForUpdates;
+        private System.Windows.Forms.ToolStripMenuItem _miTechnicalDetails;
     }
 }
 
