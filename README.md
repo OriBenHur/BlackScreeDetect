@@ -1,1 +1,1 @@
-# BlackScreeDetect
+# BlackScreenDetect
