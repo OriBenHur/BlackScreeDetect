@@ -190,6 +190,7 @@
             this.Controls.Add(this._browesButton);
             this.Controls.Add(this._tbFFmpegLocation);
             this.Controls.Add(this._ffmpegbinLib);
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "ProgramSettings";
