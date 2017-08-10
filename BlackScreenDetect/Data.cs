@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Windows.Forms;
 
 namespace BlackScreenDetect
 {
@@ -14,8 +16,18 @@ namespace BlackScreenDetect
         public string FFmpegBinLib { get; set; }
         public string OutputFolder { get; set; }
         public string Duration { get; set; }
-        public  string PixThreshold { get; set; }
+        public string PixThreshold { get; set; }
         public string PicThreshold { get; set; }
+        public bool PlaySounds { get; set; } = true;
+        public bool X256 { get; set; } = true;
+        public bool X128 { get; set; }
+        public bool X64 { get; set; }
+        public int Opacity { get; set; } = 1;
+        public int LoadX { get; set; } = 400;
+        public int LoadY { get; set; } = 400;
+        public int LoadW { get; set; }
+        public int LoadH { get; set; }
+
 
         public static Data Instance => _instance ?? (_instance = Load());
 
@@ -28,6 +40,16 @@ namespace BlackScreenDetect
         {
             if (WatchedFolders == null)
                 WatchedFolders = new List<string>();
+
+            if (string.IsNullOrEmpty(Duration))
+                Duration = "1";
+
+
+            if (string.IsNullOrEmpty(PicThreshold))
+                PicThreshold = "0.98";
+
+            if (string.IsNullOrEmpty(PixThreshold))
+                PixThreshold = "0";
         }
 
         public static void Save()
@@ -44,7 +66,7 @@ namespace BlackScreenDetect
             }
             try
             {
-                using (FileStream fileStream = File.OpenWrite(SavePath))
+                using (var fileStream = File.OpenWrite(SavePath))
                     new BinaryFormatter().Serialize(fileStream, _instance);
             }
             catch (Exception ex)
@@ -60,7 +82,7 @@ namespace BlackScreenDetect
             object obj = null;
             try
             {
-                using (FileStream fileStream = File.OpenRead(SavePath))
+                using (var fileStream = File.OpenRead(SavePath))
                     obj = new BinaryFormatter().Deserialize(fileStream);
             }
             catch (Exception ex)
@@ -79,7 +101,7 @@ namespace BlackScreenDetect
                 }
                 return new Data();
             }
-            Data data = obj as Data;
+            var data = obj as Data;
             data?.CheckData();
             return data;
         }

@@ -61,6 +61,15 @@ namespace BlackScreenDetect.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized resource of type System.IO.UnmanagedMemoryStream similar to System.IO.MemoryStream.
+        /// </summary>
+        internal static System.IO.UnmanagedMemoryStream Done {
+            get {
+                return ResourceManager.GetStream("Done", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
         internal static System.Drawing.Bitmap Loading {
@@ -75,7 +84,7 @@ namespace BlackScreenDetect.Properties {
         /// </summary>
         internal static System.Drawing.Bitmap tsBtnAddFolder_Image {
             get {
-                object obj = ResourceManager.GetObject("tsBtnAddFolder.Image", resourceCulture);
+                object obj = ResourceManager.GetObject("tsBtnAddFolder_Image", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -85,7 +94,7 @@ namespace BlackScreenDetect.Properties {
         /// </summary>
         internal static System.Drawing.Bitmap tsBtnRemoveFolder_Image {
             get {
-                object obj = ResourceManager.GetObject("tsBtnRemoveFolder.Image", resourceCulture);
+                object obj = ResourceManager.GetObject("tsBtnRemoveFolder_Image", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

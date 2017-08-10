@@ -41,26 +41,28 @@
             this._lbpixthreshold = new System.Windows.Forms.Label();
             this._lbpicthreshold = new System.Windows.Forms.Label();
             this._tbpicthreshold = new System.Windows.Forms.TextBox();
+            this._cbPlaySounds = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // _ffmpegbinLib
             // 
             this._ffmpegbinLib.AutoSize = true;
-            this._ffmpegbinLib.Location = new System.Drawing.Point(4, 18);
+            this._ffmpegbinLib.Location = new System.Drawing.Point(12, 18);
             this._ffmpegbinLib.Name = "_ffmpegbinLib";
             this._ffmpegbinLib.Size = new System.Drawing.Size(79, 13);
             this._ffmpegbinLib.TabIndex = 0;
             this._ffmpegbinLib.Text = "FFmpeg bin dir:";
+            // 
             // _tbFFmpegLocation
             // 
-            this._tbFFmpegLocation.Location = new System.Drawing.Point(84, 15);
+            this._tbFFmpegLocation.Location = new System.Drawing.Point(92, 15);
             this._tbFFmpegLocation.Name = "_tbFFmpegLocation";
             this._tbFFmpegLocation.Size = new System.Drawing.Size(188, 20);
             this._tbFFmpegLocation.TabIndex = 1;
             // 
             // _browesButton
             // 
-            this._browesButton.Location = new System.Drawing.Point(278, 14);
+            this._browesButton.Location = new System.Drawing.Point(286, 14);
             this._browesButton.Name = "_browesButton";
             this._browesButton.Size = new System.Drawing.Size(28, 23);
             this._browesButton.TabIndex = 2;
@@ -70,7 +72,8 @@
             // 
             // _SaveButton
             // 
-            this._SaveButton.Location = new System.Drawing.Point(231, 175);
+            this._SaveButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+            this._SaveButton.Location = new System.Drawing.Point(242, 196);
             this._SaveButton.Name = "_SaveButton";
             this._SaveButton.Size = new System.Drawing.Size(75, 23);
             this._SaveButton.TabIndex = 3;
@@ -80,7 +83,7 @@
             // 
             // _btOutputfolder
             // 
-            this._btOutputfolder.Location = new System.Drawing.Point(278, 44);
+            this._btOutputfolder.Location = new System.Drawing.Point(286, 44);
             this._btOutputfolder.Name = "_btOutputfolder";
             this._btOutputfolder.Size = new System.Drawing.Size(28, 23);
             this._btOutputfolder.TabIndex = 6;
@@ -90,7 +93,7 @@
             // 
             // _tbOutputfolder
             // 
-            this._tbOutputfolder.Location = new System.Drawing.Point(84, 45);
+            this._tbOutputfolder.Location = new System.Drawing.Point(92, 45);
             this._tbOutputfolder.Name = "_tbOutputfolder";
             this._tbOutputfolder.Size = new System.Drawing.Size(188, 20);
             this._tbOutputfolder.TabIndex = 5;
@@ -98,7 +101,7 @@
             // _lbOutputFolder
             // 
             this._lbOutputFolder.AutoSize = true;
-            this._lbOutputFolder.Location = new System.Drawing.Point(4, 49);
+            this._lbOutputFolder.Location = new System.Drawing.Point(12, 49);
             this._lbOutputFolder.Name = "_lbOutputFolder";
             this._lbOutputFolder.Size = new System.Drawing.Size(74, 13);
             this._lbOutputFolder.TabIndex = 4;
@@ -107,7 +110,7 @@
             // _lbduration
             // 
             this._lbduration.AutoSize = true;
-            this._lbduration.Location = new System.Drawing.Point(4, 80);
+            this._lbduration.Location = new System.Drawing.Point(12, 112);
             this._lbduration.Name = "_lbduration";
             this._lbduration.Size = new System.Drawing.Size(94, 13);
             this._lbduration.TabIndex = 7;
@@ -115,7 +118,7 @@
             // 
             // _tbdurtion
             // 
-            this._tbdurtion.Location = new System.Drawing.Point(126, 77);
+            this._tbdurtion.Location = new System.Drawing.Point(134, 109);
             this._tbdurtion.Name = "_tbdurtion";
             this._tbdurtion.Size = new System.Drawing.Size(28, 20);
             this._tbdurtion.TabIndex = 8;
@@ -123,7 +126,7 @@
             // 
             // _tbtpixthreshold
             // 
-            this._tbtpixthreshold.Location = new System.Drawing.Point(126, 139);
+            this._tbtpixthreshold.Location = new System.Drawing.Point(134, 171);
             this._tbtpixthreshold.Name = "_tbtpixthreshold";
             this._tbtpixthreshold.Size = new System.Drawing.Size(28, 20);
             this._tbtpixthreshold.TabIndex = 10;
@@ -132,7 +135,7 @@
             // _lbpixthreshold
             // 
             this._lbpixthreshold.AutoSize = true;
-            this._lbpixthreshold.Location = new System.Drawing.Point(4, 142);
+            this._lbpixthreshold.Location = new System.Drawing.Point(12, 174);
             this._lbpixthreshold.Name = "_lbpixthreshold";
             this._lbpixthreshold.Size = new System.Drawing.Size(118, 13);
             this._lbpixthreshold.TabIndex = 9;
@@ -141,7 +144,7 @@
             // _lbpicthreshold
             // 
             this._lbpicthreshold.AutoSize = true;
-            this._lbpicthreshold.Location = new System.Drawing.Point(3, 111);
+            this._lbpicthreshold.Location = new System.Drawing.Point(11, 143);
             this._lbpicthreshold.Name = "_lbpicthreshold";
             this._lbpicthreshold.Size = new System.Drawing.Size(119, 13);
             this._lbpicthreshold.TabIndex = 15;
@@ -149,17 +152,31 @@
             // 
             // _tbpicthreshold
             // 
-            this._tbpicthreshold.Location = new System.Drawing.Point(126, 109);
+            this._tbpicthreshold.Location = new System.Drawing.Point(134, 141);
             this._tbpicthreshold.Name = "_tbpicthreshold";
             this._tbpicthreshold.Size = new System.Drawing.Size(28, 20);
             this._tbpicthreshold.TabIndex = 14;
             this._tbpicthreshold.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
+            // _cbPlaySounds
+            // 
+            this._cbPlaySounds.AutoSize = true;
+            this._cbPlaySounds.Checked = true;
+            this._cbPlaySounds.CheckState = System.Windows.Forms.CheckState.Checked;
+            this._cbPlaySounds.Location = new System.Drawing.Point(12, 80);
+            this._cbPlaySounds.Name = "_cbPlaySounds";
+            this._cbPlaySounds.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this._cbPlaySounds.Size = new System.Drawing.Size(85, 17);
+            this._cbPlaySounds.TabIndex = 16;
+            this._cbPlaySounds.Text = "Play Sounds";
+            this._cbPlaySounds.UseVisualStyleBackColor = true;
+            // 
             // ProgramSettings
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(311, 208);
+            this.ClientSize = new System.Drawing.Size(329, 231);
+            this.Controls.Add(this._cbPlaySounds);
             this.Controls.Add(this._lbpicthreshold);
             this.Controls.Add(this._tbpicthreshold);
             this.Controls.Add(this._tbtpixthreshold);
@@ -178,7 +195,7 @@
             this.Name = "ProgramSettings";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
-            this.Text = "ProgramSettings";
+            this.Text = "Program Settings";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -199,5 +216,6 @@
         private System.Windows.Forms.Label _lbpixthreshold;
         private System.Windows.Forms.Label _lbpicthreshold;
         private System.Windows.Forms.TextBox _tbpicthreshold;
+        private System.Windows.Forms.CheckBox _cbPlaySounds;
     }
 }
