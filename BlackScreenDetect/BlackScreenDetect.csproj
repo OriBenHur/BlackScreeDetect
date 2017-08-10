@@ -81,7 +81,6 @@
       <DependentUpon>ProgramSettings.cs</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PsExtensions.cs" />
     <Compile Include="Reflector.cs" />
     <Compile Include="TechnicalDetails.cs">
       <SubType>Form</SubType>
@@ -141,9 +140,7 @@
     <None Include="lib\Done.wav" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="icon.ico" />
     <None Include="lib\icon.ico" />
-    <Content Include="ntfyIcon.Icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
