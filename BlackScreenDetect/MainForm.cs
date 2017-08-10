@@ -8,10 +8,12 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using System.Management.Automation;
-using System.Reflection;
+using System.Media;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using BlackScreenDetect.Properties;
+using static System.Reflection.Assembly;
 
 
 namespace BlackScreenDetect
@@ -21,21 +23,20 @@ namespace BlackScreenDetect
         private string[] SelectedItems => (from object item in _listBoxWatchedItems.SelectedItems
                                            select item.ToString()).ToArray();
 
-        private static Size MainSize { get; set; }
-        private static readonly Loading LoadForm = new Loading();
-
-        public static FormWindowState Windowstate { get; set; }
+        
+        private static Loading _loadForm;// = new Loading();
 
         public MainForm()
         {
             InitializeComponent();
-            Windowstate = WindowState;
+            _loadForm = new Loading(this);
+
         }
 
         private void InitializeUi()
         {
             _listBoxWatchedItems.Items.Clear();
-            _listBoxWatchedItems.Items.AddRange(Data.Instance.WatchedFolders.ToArray());
+            _listBoxWatchedItems.Items.AddRange(Data.Instance.WatchedFolders.ToArray<object>());
 
         }
 
@@ -157,10 +158,24 @@ namespace BlackScreenDetect
         {
             if (SelectedItems == null)
                 return;
-            if (Data.Instance.FFmpegBinLib == "")
+            var ffmpeg = Data.Instance.FFmpegBinLib;
+            if (ffmpeg == "")
             {
-                MessageBox.Show(this, @"You must select The ffmpeg bin dir", @"error");
+                Log(@"You Have to Configure the ffmpeg bin Folder First", Color.Red);
                 return;
+            }
+            if (Directory.Exists(ffmpeg))
+            {
+                var files = GetFiles(ffmpeg, "*.exe");
+                if (!files.Contains($@"{ffmpeg}\ffmpeg.exe") || !files.Contains($@"{ffmpeg}\ffprobe.exe"))
+                {
+                    const string baseUrl = "https://ffmpeg.zeranoe.com/builds/";
+                    var bit = Environment.Is64BitOperatingSystem ? "win64/static/ffmpeg-latest-win64-static.7z" : "/win32/static/ffmpeg-latest-win32-static.7z";
+                    Log(@"The ffmpeg bin dir you set does not contain all the necessary binaries.", Color.Red);
+                    Log(@"Please recheck and confirm it's the right folder.", Color.Red);
+                    Log($@"Last version can be found here: {baseUrl}{bit}", Color.Red);
+                    return;
+                }
             }
 
             foreach (var selectedItem in SelectedItems)
@@ -171,19 +186,41 @@ namespace BlackScreenDetect
                 _bwLoading.RunWorkerAsync();
                 _bwProcess.RunWorkerAsync(selectedItem);
             }
+            while (_bwProcess.IsBusy)
+                Application.DoEvents();
+            if (SelectedItems.Length <= 0)
+            {
+                Log("No Item Was Selected", Color.Red);
+                return;
+            }
+            Log("Done Processing All Selected Items", Color.Gold);
+            if (!Visible) Visible = true;
+            if (!Data.Instance.PlaySounds) return;
+            var startSoundPlayer = new SoundPlayer(Resources.Done);
+            startSoundPlayer.Play();
         }
 
         private void _bwProcess_DoWork(object sender, DoWorkEventArgs e)
         {
+            var psExec = PowerShell.Create();
             var startTime = DateTime.Now.TimeOfDay;
             var ffmpeg = Data.Instance.FFmpegBinLib;
-            var pixThreshold = Data.Instance.PixThreshold ?? "0.10";
+            var duration = Data.Instance.Duration ?? "1";
             var picThreshold = Data.Instance.PicThreshold ?? "0.98";
-            var duration = Data.Instance.Duration ?? "2";
-
-            var name = Path.GetFileNameWithoutExtension(e.Argument as string);
+            var pixThreshold = Data.Instance.PixThreshold ?? "0";
+            var filePath = e.Argument as string;
+            var name = Path.GetFileNameWithoutExtension(filePath);
+            var validateScript = $@"{ffmpeg}\ffprobe.exe -stats -i '{filePath}' 2>&1";
+            psExec.AddScript(validateScript);
+            var valid = psExec.Invoke<string>().ToList();
+            if (valid.Any(item => item.Contains("Invalid data found")))
+            {
+                Log($@"{name} is Invalid Media File", Color.Red);
+                return;
+            }
+            psExec.Commands.Clear();
             var scriptText =
-                $@"[string]$out = ({ffmpeg}\ffmpeg.exe -i '{e.Argument as string}' -vf blackdetect=d={duration}:pic_th={
+                $@"[string]$out = ({ffmpeg}\ffmpeg.exe -i '{filePath}' -vf blackdetect=d={duration}:pic_th={
                         picThreshold
                     }:pix_th={pixThreshold} -f rawvideo -y nul 2>&1){
                         Environment.NewLine
@@ -194,34 +231,14 @@ namespace BlackScreenDetect
                     }$black | Out-File $env:TMP\{
                         name
                     }_out.txt";
-            PowerShell psExec = PowerShell.Create();
+
             psExec.AddScript(scriptText);
             psExec.Invoke();
             psExec.Commands.Clear();
+
             var output = "";
-            var fpsscriptText =
-                $@"{
-                        ffmpeg
-                    }\ffprobe -v error -select_streams v:0 -show_entries stream=avg_frame_rate -of default=noprint_wrappers=1:nokey=1 '{
-                        e.Argument as string
-                    }'";
-            psExec.AddScript(fpsscriptText);
-
-            var resulte = psExec.Invoke<string>().ToList();
-            var fps = 0.0;
-            foreach (var item in resulte)
-            {
-                var fraction = Regex.Match(item, "(?<numerator>.*)/(?<denominator>.*)");
-                var numerator = double.Parse(fraction.Groups["numerator"].Value);
-                var denominator = double.Parse(fraction.Groups["denominator"].Value);
-                var tmpfps = numerator / denominator;
-                fps = Convert.ToDouble(tmpfps.ToString("N3"));
-            }
-
-            psExec.Commands.Clear();
             string line;
 
-            // Read the file and display it line by line.
             var file = new StreamReader($@"{Path.GetTempPath()}\{name}_out.txt");
             while ((line = file.ReadLine()) != null)
             {
@@ -244,22 +261,27 @@ namespace BlackScreenDetect
 
         private void _bwProcess_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            LoadForm.Close();
+            _loadForm.Close();
         }
 
         private void _bwLoading_DoWork(object sender, DoWorkEventArgs e)
         {
             Invoke(new MethodInvoker(delegate
             {
-
-                LoadForm.Location = new Point(Location.X + Width / 2 - LoadForm.Width / 2, Location.Y);
-                LoadForm.ShowDialog(this);
+                var h = Data.Instance.LoadH;
+                var w = Data.Instance.LoadW;
+                var x = Data.Instance.LoadX;
+                var y = Data.Instance.LoadY;
+                _loadForm.Size = new Size(w, h);
+                _loadForm.Location = new Point(x,y); //new Point(Location.X + Width / 2 - _loadForm.Width / 2, Location.Y);
+                _loadForm.Opacity = Data.Instance.Opacity * 0.01;
+                //WindowState = FormWindowState.Minimized;
+                _loadForm.ShowDialog();
             }));
         }
 
         private static string ConvertToTime(string time)
         {
-            //
             var m = Regex.Match(time,
                 @"\[blackdetect @ [a-zA-Z0-9]{16}\].*black_start:(?<start>.*) black_end:(?<end>.*) black_duration:(?<duration>.*)");
             var start = ConvertToTime(double.Parse(m.Groups["start"].Value));
@@ -283,10 +305,6 @@ namespace BlackScreenDetect
             return tc;
         }
 
-        private void MainForm_Resize(object sender, EventArgs e)
-        {
-            MainSize = Size;
-        }
 
         private void _bwUpdate_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -294,8 +312,8 @@ namespace BlackScreenDetect
             Version newVersion = null;
             XElement change = null;
             const string xmlUrl = @"https://oribenhur.github.io/update.xml";
-            var appVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            var appName = Assembly.GetExecutingAssembly().GetName().Name.Replace(" ", "_");
+            var appVersion = GetExecutingAssembly().GetName().Version;
+            var appName = GetExecutingAssembly().GetName().Name.Replace(" ", "_");
             //var UpdadeMessageBox = new UpdateMessageBox();
             try
             {
@@ -358,12 +376,122 @@ namespace BlackScreenDetect
 
         private void _miTechnicalDetails_Click(object sender, EventArgs e)
         {
-            var appVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            var appName = Assembly.GetExecutingAssembly().GetName().Name;
-            var buildDate = File.GetLastWriteTime(Assembly.GetExecutingAssembly().Location).ToLocalTime();
+            var appVersion = GetExecutingAssembly().GetName().Version;
+            var appName = GetExecutingAssembly().GetName().Name;
+            // ReSharper disable once AssignNullToNotNullAttribute
+            var buildDate = File.GetLastWriteTime(GetExecutingAssembly().Location).ToLocalTime();
             var td = new TechnicalDetails(appName, appVersion.ToString(), $@"{buildDate.ToShortDateString()} - {buildDate.ToShortTimeString()}");
             td.ShowDialog(this);
+        }
 
+        private void _listBoxWatchedItems_DragEnter(object sender, DragEventArgs e)
+        {
+            e.Effect = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.All : DragDropEffects.None;
+        }
+
+        private void _listBoxWatchedItems_DragDrop(object sender, DragEventArgs e)
+        {
+            var s = (string[])e.Data.GetData(DataFormats.FileDrop, false);
+            int i;
+            for (i = 0; i < s.Length; i++)
+            {
+                _listBoxWatchedItems.Items.Add(s[i]);
+                var str = s[i];
+                if (str != null && !Data.Instance.WatchedFolders.Contains(str))
+                    Data.Instance.WatchedFolders.Add(str);
+            }
+            Data.Save();
+            InitializeUi();
+        }
+        private void _listBoxWatchedItems_MouseDown(object sender, MouseEventArgs e)
+        {
+            switch (e.Button)
+            {
+                case MouseButtons.Right:
+                    var rowIndex = GetRowIndex(e.Location);
+                    if (rowIndex == -1)
+                        break;
+                    _listBoxWatchedItems.ClearSelected();
+                    _listBoxWatchedItems.SelectedIndex = rowIndex;
+                    _cmsListBox.Show(this, new Point(e.X + 5, e.Y + 35));
+                    break;
+                case MouseButtons.Left:
+                    break;
+                case MouseButtons.None:
+                    break;
+                case MouseButtons.Middle:
+                    break;
+                case MouseButtons.XButton1:
+                    break;
+                case MouseButtons.XButton2:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
+
+
+        private void Open(object sender, EventArgs e)
+        {
+            var folder = Path.GetDirectoryName(_listBoxWatchedItems.SelectedItem as string);
+            if (folder != null) Process.Start(folder);
+        }
+
+        private void _listBoxWatchedItems_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.A && e.Control)
+            {
+                for (var val = 0; val < _listBoxWatchedItems.Items.Count; val++)
+                {
+                    _listBoxWatchedItems.SetSelected(val, true);
+                }
+            }
+            if (e.KeyCode == Keys.Delete)
+            {
+                _tsBtnRemoveFolder_Click(sender, e);
+            }
+        }
+
+        private void _rtbLog_MouseDown(object sender, MouseEventArgs e)
+        {
+            var contextMenu = new ContextMenu();
+            var clear = new MenuItem("Clear Log");
+            var copyText = new MenuItem("Copy Text");
+            copyText.Click += CopyText;
+            contextMenu.MenuItems.Add(copyText);
+            clear.Click += Clear;
+            contextMenu.MenuItems.Add(clear);
+            _rtbLog.ContextMenu = contextMenu;
+        }
+
+        private void CopyText(object sender, EventArgs e)
+        {
+            _rtbLog.Copy();
+        }
+        private void Clear(object sender, EventArgs e)
+        {
+            _rtbLog.Clear();
+            //InitializeUi();
+            Log("Ready.");
+        }
+
+
+        private int GetRowIndex(Point p)
+        {
+            for (var i = 0; i < _listBoxWatchedItems.Items.Count; i++)
+            {
+                var r1 = _listBoxWatchedItems.GetItemRectangle(i);
+                var r = new Rectangle(0, r1.Top, _listBoxWatchedItems.Width, r1.Height);
+                if (!r.Contains(p)) continue;
+                _listBoxWatchedItems.Focus();
+                return i;
+            }
+            return -1;
+        }
+
+        private void _rtbLog_LinkClicked(object sender, LinkClickedEventArgs e)
+        {
+            Process.Start(e.LinkText);
         }
     }
 }
