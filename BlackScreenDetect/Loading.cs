@@ -1,56 +1,31 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
+using static System.Reflection.Assembly;
 
 namespace BlackScreenDetect
 {
     public partial class Loading : Form
     {
         private readonly MainForm _mf;
-        private readonly TrackBar _opacity;
-        private readonly RadioButton _x256;
-        private readonly RadioButton _x128;
-        private readonly RadioButton _x64;
-
+        public bool IsAbort { get; set; }
+        public bool IsAbortAll;
         public Loading(MainForm form)
         {
             InitializeComponent();
-            _x256 = new RadioButton();
-            _x128 = new RadioButton();
-            _x64 = new RadioButton();
-            _opacity = new TrackBar();
-            _x256.Text = @"256x256";
-            _x256.Checked = Data.Instance.X256;
-            _x256.BackColor = Color.White;
-            _x256.CheckedChanged += x256_CheckedChanged;
-            _x128.Text = @"128x128";
-            _x128.Checked = Data.Instance.X128;
-            _x128.BackColor = Color.White;
-            _x128.CheckedChanged += x128_CheckedChanged;
-            _x64.Text = @"64x64";
-            _x64.Checked = Data.Instance.X64;
-            _x64.BackColor = Color.White;
-            _x64.CheckedChanged += x64_CheckedChanged;
-            _opacity.Maximum = 100;
-            _opacity.Minimum = 15;
-            _opacity.Value = Data.Instance.Opacity;
-            _opacity.Scroll += opacity_Scroll;
-            _opacity.ForeColor = Color.White;
-            var ch = new ToolStripControlHost(_x256);
-            var ch1 = new ToolStripControlHost(_x128);
-            var ch2 = new ToolStripControlHost(_x64);
-            var ch3 = new ToolStripControlHost(_opacity);
-            _cmsSizes.Items.Clear();
-            _cmsSizes.Items.Add(ch);
-            _cmsSizes.Items.Add(ch1);
-            _cmsSizes.Items.Add(ch2);
-            _cmsSizes.Items.Add(ch3);
-
+            _ts256.Checked = Data.Instance.X256;
+            _ts128.Checked = Data.Instance.X128;
+            _ts64.Checked = Data.Instance.X64;
+            _tsOpacity.Value = Data.Instance.Opacity;
+            _tsh256 = new ToolStripControlHost(_ts256);
+            _tsh128 = new ToolStripControlHost(_ts128);
+            _tsh64 = new ToolStripControlHost(_ts64);
+            _tshOpacity = new ToolStripControlHost(_tsOpacity);
+            _cmsSizes.Items.AddRange(new ToolStripItem[] {_tsh256, _tsh128, _tsh64, _tshOpacity, _tsAbort, _tsAbortAll});
             BackColor = Color.LimeGreen;
             TransparencyKey = Color.LimeGreen;
             _mf = form;
-
-
         }
         public sealed override Color BackColor
         {
@@ -102,17 +77,70 @@ namespace BlackScreenDetect
             Size = new Size(64, 64);
             _cmsSizes.Close();
         }
+        private void Abort_Clicked(object sender, EventArgs e)
+        {
+            IsAbort = true;
+            var visual = false;
+            if (_mf.Visible == false)
+            {
+                _mf.Opacity = 0;
+                _mf.Visible = true;
+            }
+            else visual = true;
 
+            foreach (var process in Process.GetProcessesByName("ffmpeg"))
+            {
+                var parent = ParentProcessUtilities.GetParentProcess(process.Id).MainWindowTitle;
+                if (!visual)
+                {
+                    _mf.Visible = false;
+                    _mf.Opacity = 100;
+                    
+                }
+                if (parent.Equals(GetExecutingAssembly().GetName().Name))
+                    process.Kill();
+                
+            }   
+        }
+
+        private void AbortAll_Clicked(object sender, EventArgs e)
+        {
+            IsAbortAll = true;
+            var visual = false;
+            if (_mf.Visible == false)
+            {
+                _mf.Opacity = 0;
+                _mf.Visible = true;
+            }
+            else visual = true;
+            foreach (var process in Process.GetProcessesByName("ffmpeg"))
+            {
+                var parent = ParentProcessUtilities.GetParentProcess(process.Id).MainWindowTitle;
+                if (!visual)
+                {
+                    _mf.Visible = false;
+                    _mf.Opacity = 100;
+
+                }
+                if (parent.Equals(GetExecutingAssembly().GetName().Name))
+                    process.Kill();
+            }
+
+        }
         private void opacity_Scroll(object sender, EventArgs e)
         {
-            Opacity = _opacity.Value * 0.01;
-            Save();
+            Opacity = _tsOpacity.Value * 0.01;
+            Data.Instance.Opacity = _tsOpacity.Value;
+            Data.Save();
         }
 
         private void pictureBox1_MouseMove(object sender, MouseEventArgs e)
         {
             if (!_isDragging || e.Clicks == 2) return;
             Location = new Point(Left + (e.X - _currentX), Top + (e.Y - _currentY));
+            Data.Instance.LoadX = Location.X;
+            Data.Instance.LoadY = Location.Y;
+            Data.Save();
         }
 
         private void pictureBox1_MouseUp(object sender, MouseEventArgs e)
@@ -128,13 +156,9 @@ namespace BlackScreenDetect
 
         private void Save()
         {
-            Data.Instance.X256 = _x256.Checked;
-            Data.Instance.X128 = _x128.Checked;
-            Data.Instance.X64 = _x64.Checked;
-            Data.Instance.Opacity = _opacity.Value;
-            Data.Instance.LoadW = Data.Instance.LoadH = Size.Width;
-            Data.Instance.LoadX = Location.X;
-            Data.Instance.LoadY = Location.Y;
+            Data.Instance.X256 = _ts256.Checked;
+            Data.Instance.X128 = _ts128.Checked;
+            Data.Instance.X64 = _ts64.Checked;
             Data.Save();
         }
 
@@ -145,14 +169,8 @@ namespace BlackScreenDetect
 
         private void Loading_SizeChanged(object sender, EventArgs e)
         {
-            Save();
+            Data.Instance.LoadW = Data.Instance.LoadH = Size.Width;
+            Data.Save();
         }
-
-
-
-        //private void Loading_Shown(object sender, EventArgs e)
-        //{
-        //    _bwUpdate.RunWorkerAsync();
-        //}
     }
 }
