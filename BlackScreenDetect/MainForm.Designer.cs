@@ -63,7 +63,7 @@
             this._rtbLog.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
             this._rtbLog.Location = new System.Drawing.Point(0, 185);
             this._rtbLog.Name = "_rtbLog";
-            this._rtbLog.Size = new System.Drawing.Size(784, 232);
+            this._rtbLog.Size = new System.Drawing.Size(946, 232);
             this._rtbLog.TabIndex = 1;
             this._rtbLog.Text = "";
             this._rtbLog.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this._rtbLog_LinkClicked);
@@ -77,7 +77,7 @@
             this._listBoxWatchedItems.Location = new System.Drawing.Point(0, 25);
             this._listBoxWatchedItems.Name = "_listBoxWatchedItems";
             this._listBoxWatchedItems.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this._listBoxWatchedItems.Size = new System.Drawing.Size(784, 160);
+            this._listBoxWatchedItems.Size = new System.Drawing.Size(946, 160);
             this._listBoxWatchedItems.TabIndex = 0;
             this._listBoxWatchedItems.DragDrop += new System.Windows.Forms.DragEventHandler(this._listBoxWatchedItems_DragDrop);
             this._listBoxWatchedItems.DragEnter += new System.Windows.Forms.DragEventHandler(this._listBoxWatchedItems_DragEnter);
@@ -92,7 +92,7 @@
             this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panel1.Location = new System.Drawing.Point(0, 0);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(784, 417);
+            this.panel1.Size = new System.Drawing.Size(946, 417);
             this.panel1.TabIndex = 2;
             // 
             // _tsMain
@@ -107,7 +107,7 @@
             this._btAbout});
             this._tsMain.Location = new System.Drawing.Point(0, 0);
             this._tsMain.Name = "_tsMain";
-            this._tsMain.Size = new System.Drawing.Size(784, 25);
+            this._tsMain.Size = new System.Drawing.Size(946, 25);
             this._tsMain.TabIndex = 2;
             this._tsMain.Text = "toolStrip1";
             // 
@@ -148,14 +148,14 @@
             // folderToolStripMenuItem
             // 
             this.folderToolStripMenuItem.Name = "folderToolStripMenuItem";
-            this.folderToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.folderToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.folderToolStripMenuItem.Text = "Folder";
             this.folderToolStripMenuItem.Click += new System.EventHandler(this.folderToolStripMenuItem_Click);
             // 
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.fileToolStripMenuItem.Text = "File";
             this.fileToolStripMenuItem.Click += new System.EventHandler(this.fileToolStripMenuItem_Click);
             // 
@@ -207,11 +207,13 @@
             // 
             // _bwProcess
             // 
+            this._bwProcess.WorkerSupportsCancellation = true;
             this._bwProcess.DoWork += new System.ComponentModel.DoWorkEventHandler(this._bwProcess_DoWork);
             this._bwProcess.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this._bwProcess_RunWorkerCompleted);
             // 
             // _bwLoading
             // 
+            this._bwLoading.WorkerSupportsCancellation = true;
             this._bwLoading.DoWork += new System.ComponentModel.DoWorkEventHandler(this._bwLoading_DoWork);
             // 
             // _bwUpdate
@@ -236,11 +238,12 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(784, 417);
+            this.ClientSize = new System.Drawing.Size(946, 417);
             this.Controls.Add(this.panel1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.Text = "BlackScreenDetect";
+            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.Shown += new System.EventHandler(this.MainForm_Shown);
             this.panel1.ResumeLayout(false);
