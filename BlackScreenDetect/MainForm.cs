@@ -23,9 +23,11 @@ namespace BlackScreenDetect
         private string[] SelectedItems => (from object item in _listBoxWatchedItems.SelectedItems
                                            select item.ToString()).ToArray();
 
-        
-        private static Loading _loadForm;// = new Loading();
 
+        private static Loading _loadForm;
+        private int _abort;
+        private int _done;
+        private int _index;
         public MainForm()
         {
             InitializeComponent();
@@ -156,6 +158,7 @@ namespace BlackScreenDetect
 
         private void processToolStripButton_Click(object sender, EventArgs e)
         {
+            _index = SelectedItems.Length;
             if (SelectedItems == null)
                 return;
             var ffmpeg = Data.Instance.FFmpegBinLib;
@@ -170,31 +173,62 @@ namespace BlackScreenDetect
                 if (!files.Contains($@"{ffmpeg}\ffmpeg.exe") || !files.Contains($@"{ffmpeg}\ffprobe.exe"))
                 {
                     const string baseUrl = "https://ffmpeg.zeranoe.com/builds/";
-                    var bit = Environment.Is64BitOperatingSystem ? "win64/static/ffmpeg-latest-win64-static.7z" : "/win32/static/ffmpeg-latest-win32-static.7z";
+                    var bit = Environment.Is64BitOperatingSystem
+                        ? "win64/static/ffmpeg-latest-win64-static.7z"
+                        : "/win32/static/ffmpeg-latest-win32-static.7z";
                     Log(@"The ffmpeg bin dir you set does not contain all the necessary binaries.", Color.Red);
                     Log(@"Please recheck and confirm it's the right folder.", Color.Red);
                     Log($@"Last version can be found here: {baseUrl}{bit}", Color.Red);
                     return;
                 }
             }
-
             foreach (var selectedItem in SelectedItems)
             {
-                while (_bwProcess.IsBusy)
+                while (_bwProcess.IsBusy || _bwLoading.IsBusy)
                     Application.DoEvents();
+                if (_loadForm.IsAbortAll) break;
                 Log($@"Start Processing {Path.GetFileNameWithoutExtension(selectedItem)}");
                 _bwLoading.RunWorkerAsync();
                 _bwProcess.RunWorkerAsync(selectedItem);
             }
-            while (_bwProcess.IsBusy)
+
+            while (_bwProcess.IsBusy || _bwLoading.IsBusy)
                 Application.DoEvents();
+
             if (SelectedItems.Length <= 0)
             {
+                if (!Visible) Visible = true;
                 Log("No Item Was Selected", Color.Red);
                 return;
             }
-            Log("Done Processing All Selected Items", Color.Gold);
+
+            if (_abort == SelectedItems.Length)
+            {
+                if (!Visible) Visible = true;
+                Log("All the processes have been aborted", Color.Red);
+                _loadForm.IsAbortAll = false;
+                _loadForm.IsAbort = false;
+                _abort = 0;
+                return;
+            }
+            if (_loadForm.IsAbortAll)
+            {
+                if (!Visible) Visible = true;
+                Log("All pending processes have been aborted", Color.Red);
+                Log($"{SelectedItems.Length - _abort} reports have been saved to: {Data.Instance.OutputFolder}", Color.Gold);
+                _loadForm.IsAbortAll = false;
+                _loadForm.IsAbort = false;
+                _abort = 0;
+                return;
+            }
+            _loadForm.IsAbortAll = false;
+            _loadForm.IsAbort = false;
+            _abort = 0;
             if (!Visible) Visible = true;
+            var msg = _done == SelectedItems.Length ? "Done Processing All Selected Items" : $"Done Processing {_done} Items out of {SelectedItems.Length} Items";
+            var color = _done == SelectedItems.Length ? Color.Gold : Color.SaddleBrown;
+            Log(msg, color);
+            Log($"All the reports are saved to: {Data.Instance.OutputFolder}", Color.Gold);
             if (!Data.Instance.PlaySounds) return;
             var startSoundPlayer = new SoundPlayer(Resources.Done);
             startSoundPlayer.Play();
@@ -235,10 +269,24 @@ namespace BlackScreenDetect
             psExec.AddScript(scriptText);
             psExec.Invoke();
             psExec.Commands.Clear();
+            if (_loadForm.IsAbort)
+            {
+                _abort++;
+                Log("Process Was Aborted...", Color.Red);
+                _loadForm.IsAbort = false;
+                return;
+            }
+            if (_loadForm.IsAbortAll)
+            {
+                _abort = _abort + SelectedItems.Length - Array.FindIndex(SelectedItems, author => author.Contains((string)e.Argument));
 
+                _bwLoading.CancelAsync();
+                _bwProcess.CancelAsync();
+                e.Cancel = true;
+                return;
+            }
             var output = "";
             string line;
-
             var file = new StreamReader($@"{Path.GetTempPath()}\{name}_out.txt");
             while ((line = file.ReadLine()) != null)
             {
@@ -254,9 +302,11 @@ namespace BlackScreenDetect
             var stringMin = min.ToString("00");
             var sec = Convert.ToInt32(timeItTookSpan.Seconds);
             var stringSec = sec.ToString("00");
-            var mili = Convert.ToInt32(timeItTookSpan.Milliseconds.ToString("000"));
-            var timeFormat = min <= 0 ? $@"{stringSec}.{mili} Seconds" : $@"{stringMin}:{stringSec}.{mili} Minutes";
+            var milliSecond = Convert.ToInt32(timeItTookSpan.Milliseconds.ToString("000"));
+            var timeFormat = min <= 0 ? $@"{stringSec}.{milliSecond} Seconds" : $@"{stringMin}:{stringSec}.{milliSecond} Minutes";
             Log($@"Done Proessing {name} in {timeFormat}", Color.Green);
+            _done++;
+
         }
 
         private void _bwProcess_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -273,9 +323,10 @@ namespace BlackScreenDetect
                 var x = Data.Instance.LoadX;
                 var y = Data.Instance.LoadY;
                 _loadForm.Size = new Size(w, h);
-                _loadForm.Location = new Point(x,y); //new Point(Location.X + Width / 2 - _loadForm.Width / 2, Location.Y);
+                _loadForm.Location = x == 0 && y == 0
+                    ? new Point(Location.X + Width / 2 - _loadForm.Width / 2, Location.Y)
+                    : new Point(x, y);
                 _loadForm.Opacity = Data.Instance.Opacity * 0.01;
-                //WindowState = FormWindowState.Minimized;
                 _loadForm.ShowDialog();
             }));
         }
@@ -314,7 +365,6 @@ namespace BlackScreenDetect
             const string xmlUrl = @"https://oribenhur.github.io/update.xml";
             var appVersion = GetExecutingAssembly().GetName().Version;
             var appName = GetExecutingAssembly().GetName().Name.Replace(" ", "_");
-            //var UpdadeMessageBox = new UpdateMessageBox();
             try
             {
                 var doc = XDocument.Load(xmlUrl);
@@ -337,8 +387,6 @@ namespace BlackScreenDetect
 
             if (appVersion.CompareTo(newVersion) < 0)
             {
-
-                //Debug.Assert(change != null, "change != null");
                 var result = DialogResult.None;
                 Invoke(new MethodInvoker(delegate
                 {
@@ -350,7 +398,6 @@ namespace BlackScreenDetect
 
                 if (result == DialogResult.Yes)
                     Process.Start(downloadUrl);
-
             }
             else
             {
@@ -492,6 +539,24 @@ namespace BlackScreenDetect
         private void _rtbLog_LinkClicked(object sender, LinkClickedEventArgs e)
         {
             Process.Start(e.LinkText);
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            var txtFiles = GetFiles(Path.GetTempPath(), "*.txt");
+            foreach (var txtFile in txtFiles)
+            {
+                if (!txtFile.Contains("_out") && !txtFile.Contains("_black")) continue;
+
+                try
+                {
+                    File.Delete(txtFile);
+                }
+                catch (Exception exception)
+                {
+                    Console.WriteLine(exception);
+                }
+            }
         }
     }
 }
