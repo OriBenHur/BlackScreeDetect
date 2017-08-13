@@ -162,7 +162,7 @@ namespace BlackScreenDetect
             if (SelectedItems == null)
                 return;
             var ffmpeg = Data.Instance.FFmpegBinLib;
-            if (ffmpeg == "")
+            if (string.IsNullOrEmpty(ffmpeg))
             {
                 Log(@"You Have to Configure the ffmpeg bin Folder First", Color.Red);
                 return;
@@ -181,6 +181,12 @@ namespace BlackScreenDetect
                     Log($@"Last version can be found here: {baseUrl}{bit}", Color.Red);
                     return;
                 }
+            }
+            var output = Data.Instance.OutputFolder;
+            if (string.IsNullOrEmpty(output))
+            {
+                Log(@"You Have to Configure the Output Folder First", Color.Red);
+                return;
             }
             foreach (var selectedItem in SelectedItems)
             {
@@ -293,7 +299,7 @@ namespace BlackScreenDetect
                 if (line == "") continue;
                 output += ConvertToTime(line) + Environment.NewLine;
             }
-            var outFile = Data.Instance.OutputFolder ?? Path.GetTempPath();
+            var outFile = Data.Instance.OutputFolder;
             File.WriteAllText($@"{outFile}\{name}_out.txt", output, Encoding.UTF8);
             file.Close();
             var endTime = DateTime.Now.TimeOfDay;
