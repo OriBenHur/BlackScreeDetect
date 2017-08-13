@@ -22,11 +22,11 @@ namespace BlackScreenDetect
         public bool X256 { get; set; } = true;
         public bool X128 { get; set; }
         public bool X64 { get; set; }
-        public int Opacity { get; set; } = 1;
-        public int LoadX { get; set; } = 400;
-        public int LoadY { get; set; } = 400;
-        public int LoadW { get; set; }
-        public int LoadH { get; set; }
+        public int Opacity { get; set; } = 100;
+        public int LoadX { get; set; }
+        public int LoadY { get; set; }
+        public int LoadW { get; set; } = 256;
+        public int LoadH { get; set; } = 256;
 
 
         public static Data Instance => _instance ?? (_instance = Load());

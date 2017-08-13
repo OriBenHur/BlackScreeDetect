@@ -21,7 +21,7 @@ namespace BlackScreenDetect
         {
             var fs = new FolderSelectDialog
             {
-                InitialDirectory = _tbFFmpegLocation.Text == "" ? @"C:\" : _tbFFmpegLocation.Text,
+                InitialDirectory = string.IsNullOrEmpty(_tbFFmpegLocation.Text) ? @"C:\" : _tbFFmpegLocation.Text,
                 Title = "Select ffmpeg bin dir"
             };
 
@@ -37,7 +37,7 @@ namespace BlackScreenDetect
         {
             var fs = new FolderSelectDialog
             {
-                InitialDirectory = _tbOutputfolder.Text == "" ? @"C:\" : _tbOutputfolder.Text,
+                InitialDirectory = string.IsNullOrEmpty(_tbOutputfolder.Text) ? @"C:\" : _tbOutputfolder.Text,
                 Title = "Select output dir"
             };
             var result = fs.ShowDialog(Handle);
