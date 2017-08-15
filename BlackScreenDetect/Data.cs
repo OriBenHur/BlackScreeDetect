@@ -27,6 +27,9 @@ namespace BlackScreenDetect
         public int LoadY { get; set; }
         public int LoadW { get; set; } = 256;
         public int LoadH { get; set; } = 256;
+        public  Color ForeColorColor { get; set; } = Color.FromArgb(5, 5, 5);
+        public Color BackColor { get; set; } = Color.Black;
+        public string PickItem { get; set; } = "Transparent Background";
 
 
         public static Data Instance => _instance ?? (_instance = Load());

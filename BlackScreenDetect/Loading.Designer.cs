@@ -1,4 +1,6 @@
-﻿namespace BlackScreenDetect
+﻿using System.Windows.Forms;
+
+namespace BlackScreenDetect
 {
     partial class Loading
     {
@@ -40,6 +42,8 @@
             this._lbPrograss = new System.Windows.Forms.Label();
             this._niLoading = new System.Windows.Forms.NotifyIcon(this.components);
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this._tsOpenMain = new System.Windows.Forms.ToolStripMenuItem();
+            this._tsComboBox = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this._tsOpacity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -47,7 +51,6 @@
             // _cmsSizes
             // 
             this._cmsSizes.Name = "_cmsSizes";
-            this._cmsSizes.RenderMode = System.Windows.Forms.ToolStripRenderMode.Professional;
             this._cmsSizes.ShowImageMargin = false;
             this._cmsSizes.Size = new System.Drawing.Size(36, 4);
             // 
@@ -123,12 +126,12 @@
             // 
             this._niLoading.ContextMenuStrip = this._cmsSizes;
             this._niLoading.Icon = ((System.Drawing.Icon)(resources.GetObject("_niLoading.Icon")));
-            this._niLoading.BalloonTipShown += new System.EventHandler(this._niLoading_BalloonTipShown);
-            this._niLoading.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this._niLoading_MouseDoubleClick);
-            this._niLoading.MouseMove += new System.Windows.Forms.MouseEventHandler(this._niLoading_MouseMove);
+            this._niLoading.Text = "BlackScreenDetect";
+            this._niLoading.DoubleClick += new System.EventHandler(this._niLoading_DoubleClick);
             // 
             // pictureBox1
             // 
+            this.pictureBox1.ContextMenuStrip = this._cmsSizes;
             this.pictureBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictureBox1.Image = global::BlackScreenDetect.Properties.Resources.New_Loading;
             this.pictureBox1.Location = new System.Drawing.Point(0, 0);
@@ -143,6 +146,27 @@
             this.pictureBox1.MouseMove += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseMove);
             this.pictureBox1.MouseUp += new System.Windows.Forms.MouseEventHandler(this.pictureBox1_MouseUp);
             // 
+            // _tsOpenMain
+            // 
+            this._tsOpenMain.Name = "_tsOpenMain";
+            this._tsOpenMain.Size = new System.Drawing.Size(32, 19);
+            this._tsOpenMain.Text = "Show Main Window";
+            this._tsOpenMain.Click += new System.EventHandler(this.ShowMain_Clicked);
+            // 
+            // _tsComboBox
+            // 
+            this._tsComboBox.FormattingEnabled = true;
+            this._tsComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            this._tsComboBox.Items.AddRange(new object[] {
+            "Transparent Background",
+            "Gray Backround",
+            "White Backround"});
+            this._tsComboBox.Location = new System.Drawing.Point(0, 0);
+            this._tsComboBox.Name = "_tsComboBox";
+            this._tsComboBox.Size = new System.Drawing.Size(150, 21);
+            this._tsComboBox.TabIndex = 2;
+            this._tsComboBox.SelectionChangeCommitted += new System.EventHandler(this._tsComboBox_SelectionChangeCommitted);
+            // 
             // Loading
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -150,6 +174,7 @@
             this.BackColor = System.Drawing.Color.White;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(80, 80);
+            //this.Controls.Add(this._tsComboBox);
             this.Controls.Add(this._lbPrograss);
             this.Controls.Add(this.pictureBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -159,7 +184,6 @@
             this.ShowInTaskbar = false;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.TopMost = true;
-            this.Deactivate += new System.EventHandler(this.Loading_Deactivate);
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.Loading_FormClosing);
             this.Load += new System.EventHandler(this.Loading_Load);
             this.LocationChanged += new System.EventHandler(this.Loading_LocationChanged);
@@ -187,6 +211,11 @@
         private System.Windows.Forms.ToolStripControlHost _tsh64;
         private System.Windows.Forms.ToolStripControlHost _tshOpacity;
         public System.Windows.Forms.NotifyIcon _niLoading;
+        private System.Windows.Forms.ToolStripMenuItem _tsOpenMain;
+        //private System.Windows.Forms.ToolStripMenuItem _tsiBlack;
+        //private System.Windows.Forms.ToolStripMenuItem _tsiWhite;
 
+        private System.Windows.Forms.ToolStripControlHost _tshComboBox;
+        private System.Windows.Forms.ComboBox _tsComboBox;
     }
 }

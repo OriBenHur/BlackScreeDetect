@@ -33,6 +33,7 @@ namespace BlackScreenDetect
         {
             InitializeComponent();
             _loadForm = new Loading(this);
+            
 
         }
 
