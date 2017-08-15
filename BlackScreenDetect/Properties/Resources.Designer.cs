@@ -72,9 +72,9 @@ namespace BlackScreenDetect.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
-        internal static System.Drawing.Bitmap Loading {
+        internal static System.Drawing.Bitmap New_Loading {
             get {
-                object obj = ResourceManager.GetObject("Loading", resourceCulture);
+                object obj = ResourceManager.GetObject("New_Loading", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

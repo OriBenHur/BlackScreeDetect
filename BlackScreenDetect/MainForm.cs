@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
@@ -27,7 +28,7 @@ namespace BlackScreenDetect
         private static Loading _loadForm;
         private int _abort;
         private int _done;
-        private int _index;
+        //private int _index;
         public MainForm()
         {
             InitializeComponent();
@@ -42,7 +43,7 @@ namespace BlackScreenDetect
 
         }
 
-        private void Log(string text, Color color = default(Color))
+        private string Log(string text, Color color = default(Color))
         {
             _rtbLog.Invoke(() =>
             {
@@ -55,6 +56,7 @@ namespace BlackScreenDetect
                 _rtbLog.AppendText($"{text}\n");
                 _rtbLog.ScrollToCaret();
             });
+            return $"{DateTime.Now}: {text}";
         }
 
         private static IEnumerable<string> Filtered_List(IList<string> list)
@@ -156,9 +158,9 @@ namespace BlackScreenDetect
             Log("Saved settings.");
         }
 
+        private string _text;
         private void processToolStripButton_Click(object sender, EventArgs e)
         {
-            _index = SelectedItems.Length;
             if (SelectedItems == null)
                 return;
             var ffmpeg = Data.Instance.FFmpegBinLib;
@@ -193,7 +195,7 @@ namespace BlackScreenDetect
                 while (_bwProcess.IsBusy || _bwLoading.IsBusy)
                     Application.DoEvents();
                 if (_loadForm.IsAbortAll) break;
-                Log($@"Start Processing {Path.GetFileNameWithoutExtension(selectedItem)}");
+                _text = Log($@"Start Processing {Path.GetFileNameWithoutExtension(selectedItem)}");
                 _bwLoading.RunWorkerAsync();
                 _bwProcess.RunWorkerAsync(selectedItem);
             }
@@ -201,146 +203,211 @@ namespace BlackScreenDetect
             while (_bwProcess.IsBusy || _bwLoading.IsBusy)
                 Application.DoEvents();
 
+
             if (SelectedItems.Length <= 0)
             {
-                if (!Visible) Visible = true;
+                Text = @"BlackScreenDetect";
+
                 Log("No Item Was Selected", Color.Red);
                 return;
             }
 
             if (_abort == SelectedItems.Length)
             {
+                Text = @"BlackScreenDetect";
+                _loadForm._niLoading.Visible = false;
                 if (!Visible) Visible = true;
+                BringToFront();
                 Log("All the processes have been aborted", Color.Red);
                 _loadForm.IsAbortAll = false;
                 _loadForm.IsAbort = false;
-                _abort = 0;
+                _abort = _done = 0;
                 return;
             }
             if (_loadForm.IsAbortAll)
             {
+                Text = @"BlackScreenDetect";
+                _loadForm._niLoading.Visible = false;
                 if (!Visible) Visible = true;
+                BringToFront();
                 Log("All pending processes have been aborted", Color.Red);
                 Log($"{SelectedItems.Length - _abort} reports have been saved to: {Data.Instance.OutputFolder}", Color.Gold);
                 _loadForm.IsAbortAll = false;
                 _loadForm.IsAbort = false;
-                _abort = 0;
+                _abort = _done = 0;
                 return;
             }
+
             _loadForm.IsAbortAll = false;
             _loadForm.IsAbort = false;
-            _abort = 0;
+            Text = @"BlackScreenDetect";
+            _loadForm._niLoading.Visible = false;
             if (!Visible) Visible = true;
-            var msg = _done == SelectedItems.Length ? "Done Processing All Selected Items" : $"Done Processing {_done} Items out of {SelectedItems.Length} Items";
-            var color = _done == SelectedItems.Length ? Color.Gold : Color.SaddleBrown;
+            BringToFront();
+            string msg;
+            Color color;
+
+            if (_done == SelectedItems.Length)
+            {
+                msg = "Done Processing All Selected Items";
+                color = Color.Gold;
+            }
+
+            else
+            {
+
+                msg = $"Done Processing {_done} Items out of {SelectedItems.Length} Items";
+                color = Color.SaddleBrown;
+            }
+
             Log(msg, color);
             Log($"All the reports are saved to: {Data.Instance.OutputFolder}", Color.Gold);
+            _abort = _done = 0;
             if (!Data.Instance.PlaySounds) return;
             var startSoundPlayer = new SoundPlayer(Resources.Done);
             startSoundPlayer.Play();
         }
 
+        private double _time;
+        public string Percentage;
+        public string VideoName;
+
         private void _bwProcess_DoWork(object sender, DoWorkEventArgs e)
         {
-            var psExec = PowerShell.Create();
-            var startTime = DateTime.Now.TimeOfDay;
-            var ffmpeg = Data.Instance.FFmpegBinLib;
-            var duration = Data.Instance.Duration ?? "1";
-            var picThreshold = Data.Instance.PicThreshold ?? "0.98";
-            var pixThreshold = Data.Instance.PixThreshold ?? "0";
-            var filePath = e.Argument as string;
-            var name = Path.GetFileNameWithoutExtension(filePath);
-            var validateScript = $@"{ffmpeg}\ffprobe.exe -stats -i '{filePath}' 2>&1";
-            psExec.AddScript(validateScript);
-            var valid = psExec.Invoke<string>().ToList();
-            if (valid.Any(item => item.Contains("Invalid data found")))
-            {
-                Log($@"{name} is Invalid Media File", Color.Red);
-                return;
-            }
-            psExec.Commands.Clear();
-            var scriptText =
-                $@"[string]$out = ({ffmpeg}\ffmpeg.exe -i '{filePath}' -vf blackdetect=d={duration}:pic_th={
-                        picThreshold
-                    }:pix_th={pixThreshold} -f rawvideo -y nul 2>&1){
-                        Environment.NewLine
-                    }$out | Out-File $env:TMP\{name}_black.txt{Environment.NewLine}$black = (Get-Content $env:TMP\{
-                        name
-                    }_black.txt | Select-String -Pattern ""blackdetect""){
-                        Environment.NewLine
-                    }$black | Out-File $env:TMP\{
-                        name
-                    }_out.txt";
 
-            psExec.AddScript(scriptText);
-            psExec.Invoke();
-            psExec.Commands.Clear();
-            if (_loadForm.IsAbort)
+            using (var psExec = PowerShell.Create())
             {
-                _abort++;
-                Log("Process Was Aborted...", Color.Red);
-                _loadForm.IsAbort = false;
-                return;
-            }
-            if (_loadForm.IsAbortAll)
-            {
-                _abort = _abort + SelectedItems.Length - Array.FindIndex(SelectedItems, author => author.Contains((string)e.Argument));
+                var startTime = DateTime.Now.TimeOfDay;
+                var ffmpeg = Data.Instance.FFmpegBinLib;
+                var duration = Data.Instance.Duration ?? "1";
+                var picThreshold = Data.Instance.PicThreshold ?? "0.98";
+                var pixThreshold = Data.Instance.PixThreshold ?? "0";
+                var filePath = e.Argument as string;
+                VideoName = Path.GetFileNameWithoutExtension(filePath);
+                var validateScript = $@"{ffmpeg}\ffprobe.exe -stats -i '{filePath}' 2>&1";
+                psExec.AddScript(validateScript);
+                var valid = psExec.Invoke<string>().ToList();
+                if (valid.Any(item => item.Contains("Invalid data found")))
+                {
+                    Log($@"{VideoName} is Invalid Media File", Color.Red);
+                    return;
+                }
+                psExec.Commands.Clear();
+                var timeScript = $@"D:\ffmpeg\bin\ffprobe.exe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '{filePath}'";
+                psExec.AddScript(timeScript);
+                var tm = psExec.Invoke<string>().ToList();
+                foreach (var item in tm)
+                {
+                    _time = Convert.ToDouble($"{Convert.ToDouble(item):0.000}");
+                }
+                psExec.Commands.Clear();
+                var scriptText =
+                    $@"{ffmpeg}\ffmpeg.exe -i '{filePath}' -vf blackdetect=d={duration}:pic_th={picThreshold}:pix_th={pixThreshold} -f rawvideo -y nul 2>&1 | Select-String -Pattern ""black_start"",""speed""";
+                psExec.AddScript(scriptText);
+                var result = "";
+                var output = new ObservableCollection<string>();
+                var currenTime = DateTime.Now;
+                //Log($@"Processing {VideoName}    ", Color.BlueViolet);
+                //_rtbLog.Invoke(() =>
+                //{
+                //    _rtbLog.AppendText("\n");
+                //});
+                output.CollectionChanged += (s, r) =>
+                {
+                    foreach (var item in r.NewItems)
+                    {
+                        var m = Regex.Match(item.ToString(), "black_start");
+                        var tmMatch = Regex.Match(item.ToString(),
+                            @"time=\s*(?<time>[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{2})");
+                        if (m.Success) result = result + ConvertToTime(item.ToString()) + Environment.NewLine;
+                        else if (tmMatch.Success)
+                        {
+                            var seconds = TimeSpan.Parse(tmMatch.Groups["time"].Value).TotalSeconds;
+                            Percentage = $"{seconds / _time * 100:0.00}";
+                            _rtbLog.Invoke(() =>
+                            {
+                                ChangeLine(_rtbLog, _rtbLog.Lines.Length - 2, $@"{_text} [Processing... {Percentage}%]");
+                                Text = $@"BlackScreenDetect {Percentage}%";
+                            });
+                        }
+                    }
+                };
+                psExec.Invoke(null, output);
+                //var scriptOutput = psExec.Invoke<string>().ToList();
+                //psExec.Commands.Clear();
 
-                _bwLoading.CancelAsync();
-                _bwProcess.CancelAsync();
-                e.Cancel = true;
-                return;
-            }
-            var output = "";
-            string line;
-            var file = new StreamReader($@"{Path.GetTempPath()}\{name}_out.txt");
-            while ((line = file.ReadLine()) != null)
-            {
-                if (line == "") continue;
-                output += ConvertToTime(line) + Environment.NewLine;
-            }
-            var outFile = Data.Instance.OutputFolder;
-            File.WriteAllText($@"{outFile}\{name}_out.txt", output, Encoding.UTF8);
-            file.Close();
-            var endTime = DateTime.Now.TimeOfDay;
-            var timeItTookSpan = endTime - startTime;
-            var min = Convert.ToInt32(timeItTookSpan.Minutes);
-            var stringMin = min.ToString("00");
-            var sec = Convert.ToInt32(timeItTookSpan.Seconds);
-            var stringSec = sec.ToString("00");
-            var milliSecond = Convert.ToInt32(timeItTookSpan.Milliseconds.ToString("000"));
-            var timeFormat = min <= 0 ? $@"{stringSec}.{milliSecond} Seconds" : $@"{stringMin}:{stringSec}.{milliSecond} Minutes";
-            Log($@"Done Proessing {name} in {timeFormat}", Color.Green);
-            _done++;
+                if (_loadForm.IsAbort)
+                {
+                    this.Invoke(() => { Text = @"BlackScreenDetect"; });
+                    _abort++;
+                    Log("Process Was Aborted...", Color.Red);
+                    _loadForm.IsAbort = false;
+                    return;
+                }
 
+                if (_loadForm.IsAbortAll)
+                {
+                    this.Invoke(() => { Text = @"BlackScreenDetect"; });
+
+                    _abort = _abort + SelectedItems.Length -
+                             Array.FindIndex(SelectedItems, author => author.Contains((string)e.Argument));
+
+                    _bwLoading.CancelAsync();
+                    _bwProcess.CancelAsync();
+                    e.Cancel = true;
+                    return;
+                }
+
+                //var output = (from line in scriptOutput let m = Regex.Match(line, "black_start") where m.Success select line).Aggregate("", (current, line) => current + ConvertToTime(line) + Environment.NewLine);
+                var outFile = Data.Instance.OutputFolder;
+                File.WriteAllText($@"{outFile}\{VideoName}_out.txt", result, Encoding.UTF8);
+
+                var endTime = DateTime.Now.TimeOfDay;
+                var timeItTookSpan = (endTime - startTime).TotalSeconds;
+                var time = TimeSpan.FromSeconds(timeItTookSpan);
+                var timeFormat = timeItTookSpan >= 360
+                    ? $@"{time.Hours:00}:{time.Minutes:00}:{time.Seconds:00}.{time.Milliseconds:000} Hours"
+                    : timeItTookSpan >= 60
+                        ? $@"{time.Minutes:00}:{time.Seconds:00}.{time.Milliseconds:000} Minutes"
+                        : $@"{time.Seconds:00}.{time.Milliseconds:000} Seconds";
+                _rtbLog.Invoke(() =>
+                {
+                    ChangeLine(_rtbLog, _rtbLog.Lines.Length - 2, $@"{_text} [{Percentage}%]");
+                });
+                Log($@"Done Proessing {VideoName} in {timeFormat}", Color.Green);
+                _done++;
+            }
         }
 
+        private static void ChangeLine(TextBoxBase rtb, int line, string text)
+        {
+
+            var s1 = rtb.GetFirstCharIndexFromLine(line);
+            var s2 = line < rtb.Lines.Length - 1 ? rtb.GetFirstCharIndexFromLine(line + 1) - 1 : rtb.Text.Length;
+            rtb.Select(s1, s2 - s1);
+            rtb.SelectedText = text;
+
+        }
         private void _bwProcess_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            _loadForm.Close();
+            Invoke(new MethodInvoker(delegate
+            {
+                _loadForm.Close();
+            }));
         }
 
         private void _bwLoading_DoWork(object sender, DoWorkEventArgs e)
         {
             Invoke(new MethodInvoker(delegate
             {
-                var h = Data.Instance.LoadH;
-                var w = Data.Instance.LoadW;
-                var x = Data.Instance.LoadX;
-                var y = Data.Instance.LoadY;
-                _loadForm.Size = new Size(w, h);
-                _loadForm.Location = x == 0 && y == 0
-                    ? new Point(Location.X + Width / 2 - _loadForm.Width / 2, Location.Y)
-                    : new Point(x, y);
-                _loadForm.Opacity = Data.Instance.Opacity * 0.01;
-                _loadForm.ShowDialog();
+                _loadForm.ShowDialog(this);
             }));
         }
 
         private static string ConvertToTime(string time)
         {
             var m = Regex.Match(time,
-                @"\[blackdetect @ [a-zA-Z0-9]{16}\].*black_start:(?<start>.*) black_end:(?<end>.*) black_duration:(?<duration>.*)");
+                @".*black_start:(?<start>.*) black_end:(?<end>.*) black_duration:(?<duration>.*)");
             var start = ConvertToTime(double.Parse(m.Groups["start"].Value));
             var end = ConvertToTime(double.Parse(m.Groups["end"].Value));
             //var duration = ConvertToTime(TimeSpan.Parse($"{Convert.ToDateTime(end) - Convert.ToDateTime(start)}").TotalSeconds);

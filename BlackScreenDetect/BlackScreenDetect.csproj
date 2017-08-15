@@ -59,6 +59,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AsyncOperation.cs" />
     <Compile Include="Data.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="FolderSelectDialog.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="ProcessCaller.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProgramSettings.cs">
       <SubType>Form</SubType>
@@ -130,15 +132,13 @@
     <None Include="lib\tsBtnRemoveFolder.Image.png" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="lib\Loading.gif" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="FodyWeavers.xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="lib\Done.wav" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="lib\New_Loading.gif" />
     <Content Include="lib\icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

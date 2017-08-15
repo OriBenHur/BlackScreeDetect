@@ -19,9 +19,9 @@ namespace BlackScreenDetect
         public string PixThreshold { get; set; }
         public string PicThreshold { get; set; }
         public bool PlaySounds { get; set; } = true;
-        public bool X256 { get; set; } = true;
-        public bool X128 { get; set; }
-        public bool X64 { get; set; }
+        public bool Large { get; set; } = true;
+        public bool Medium { get; set; }
+        public bool Small { get; set; }
         public int Opacity { get; set; } = 100;
         public int LoadX { get; set; }
         public int LoadY { get; set; }

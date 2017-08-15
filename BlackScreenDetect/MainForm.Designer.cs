@@ -59,8 +59,8 @@
             // 
             this._rtbLog.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(36)))), ((int)(((byte)(86)))));
             this._rtbLog.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._rtbLog.Font = new System.Drawing.Font("Consolas", 9.75F);
-            this._rtbLog.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+            this._rtbLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
+            this._rtbLog.ForeColor = System.Drawing.Color.White;
             this._rtbLog.Location = new System.Drawing.Point(0, 185);
             this._rtbLog.Name = "_rtbLog";
             this._rtbLog.Size = new System.Drawing.Size(946, 232);
@@ -148,14 +148,14 @@
             // folderToolStripMenuItem
             // 
             this.folderToolStripMenuItem.Name = "folderToolStripMenuItem";
-            this.folderToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.folderToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.folderToolStripMenuItem.Text = "Folder";
             this.folderToolStripMenuItem.Click += new System.EventHandler(this.folderToolStripMenuItem_Click);
             // 
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.fileToolStripMenuItem.Size = new System.Drawing.Size(107, 22);
             this.fileToolStripMenuItem.Text = "File";
             this.fileToolStripMenuItem.Click += new System.EventHandler(this.fileToolStripMenuItem_Click);
             // 
