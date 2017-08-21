@@ -148,6 +148,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="lib\New_Loading.gif" />
+    <None Include="lib\Click.png" />
     <Content Include="lib\icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

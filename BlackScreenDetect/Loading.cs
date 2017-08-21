@@ -156,7 +156,7 @@ namespace BlackScreenDetect
 
         private void Loading_Move(object sender, EventArgs e)
         {
-            _prograss.Location = new Point(Left + 5 , Top - _prograss.Size.Height - 5);
+            _prograss.Location = new Point(Left, Top - _prograss.Size.Height - 5);
             Save();
         }
 
@@ -240,7 +240,7 @@ namespace BlackScreenDetect
 
             if (Top < Screen.AllScreens[0].Bounds.Top)
                 Top = Screen.AllScreens[0].Bounds.Top;
-
+            
             if (!_isLoaded) return;
             Data.Instance.LoadX = Location.X;
             Data.Instance.LoadY = Location.Y;

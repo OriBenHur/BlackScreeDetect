@@ -13,12 +13,39 @@ namespace BlackScreenDetect
         private static readonly string SavePath = Directory.GetCurrentDirectory() + "\\Settings.sd";
         private static Data _instance;
         public List<string> WatchedFolders { get; private set; }
+
         public string FFmpegBinLib { get; set; }
         public string OutputFolder { get; set; }
         public string Duration { get; set; }
         public string PixThreshold { get; set; }
         public string PicThreshold { get; set; }
+        public string FontName { get; set; }
+        public string FontSize { get; set; }
+        public string FontStyle { get; set; }
+
         public bool PlaySounds { get; set; } = true;
+        public bool NoMb { get; set; }
+        public bool Debug { get; set; }
+        public bool IsBold { get; set; }
+        public bool IsItalic { get; set; }
+        public bool IsUnderline { get; set; }
+
+
+        public Color LogBackColor { get; set; }
+        public Color RegularColor { get; set; }
+        public Color SuccessColor { get; set; }
+        public Color WarrningColor { get; set; }
+        public Color ErrorColor { get; set; }
+        public Color InfoColor { get; set; } 
+        public Color IsBoldColor { get; set; }
+        public Color IsItalicColor { get; set; }
+        public Color IsUnderlineColor { get; set; }
+
+        public Font LogFont { get; set; }
+
+
+        public Color BackColor { get; set; } 
+        public Color ForeColorColor { get; set; }
         public bool Large { get; set; } = true;
         public bool Medium { get; set; }
         public bool Small { get; set; }
@@ -27,9 +54,7 @@ namespace BlackScreenDetect
         public int LoadY { get; set; }
         public int LoadW { get; set; } = 256;
         public int LoadH { get; set; } = 256;
-        public  Color ForeColorColor { get; set; } = Color.FromArgb(5, 5, 5);
-        public Color BackColor { get; set; } = Color.Black;
-        public string PickItem { get; set; } = "Transparent Background";
+        public string PickItem { get; set; } 
 
 
         public static Data Instance => _instance ?? (_instance = Load());
@@ -47,12 +72,53 @@ namespace BlackScreenDetect
             if (string.IsNullOrEmpty(Duration))
                 Duration = "1";
 
-
             if (string.IsNullOrEmpty(PicThreshold))
                 PicThreshold = "0.98";
 
             if (string.IsNullOrEmpty(PixThreshold))
                 PixThreshold = "0";
+
+            if (string.IsNullOrEmpty(FontSize))
+                FontSize = "11";
+
+            if (string.IsNullOrEmpty(FontName))
+                FontName = "Microsoft Sans Serif";
+
+            if (string.IsNullOrEmpty(PickItem))
+                PickItem = "Transparent Background";
+
+            if (string.IsNullOrEmpty(FontStyle))
+            {
+                FontStyle = "";
+            }
+
+            if (LogBackColor.IsEmpty)
+                LogBackColor = Color.FromArgb(0, 36, 86);
+
+            if (BackColor.IsEmpty)
+                BackColor = Color.Black;
+
+            if(ForeColorColor.IsEmpty)
+                ForeColorColor = Color.FromArgb(5, 5, 5);
+
+            if (RegularColor.IsEmpty)
+                RegularColor = Color.White;
+
+            if (SuccessColor.IsEmpty)
+                SuccessColor = Color.Green;
+
+            if(WarrningColor.IsEmpty)
+                InfoColor = Color.Gold;
+
+            if (ErrorColor.IsEmpty)
+                ErrorColor = Color.Red;
+
+            if(InfoColor.IsEmpty)
+                InfoColor = Color.BlueViolet;
+
+            if(LogFont == null)
+                LogFont = new Font("Microsoft Sans Serif", 11.25F);
+
         }
 
         public static void Save()

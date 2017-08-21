@@ -19,8 +19,8 @@ namespace BlackScreenDetect
 
         public sealed override Color BackColor
         {
-            get { return base.BackColor; }
-            set { base.BackColor = value; }
+            get => base.BackColor;
+            set => base.BackColor = value;
         }
 
         private void _Run_Tick(object sender, System.EventArgs e)
@@ -39,13 +39,13 @@ namespace BlackScreenDetect
             if (Left + Width > Screen.AllScreens[0].Bounds.Width)
             {
                 Left = Screen.AllScreens[0].Bounds.Width - Width;
-                _loading.Left = Left - 5;
+                _loading.Left = Left;
             }
 
             if (Left < Screen.AllScreens[0].Bounds.Left)
             {
                 Left = Screen.AllScreens[0].Bounds.Left;
-                _loading.Left = Left - 5;
+                _loading.Left = Left;
             }
 
             if (Top + Height > Screen.AllScreens[0].Bounds.Height)

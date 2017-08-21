@@ -10,8 +10,10 @@ using System.Linq;
 using System.Windows.Forms;
 using System.Management.Automation;
 using System.Media;
+using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml;
 using System.Xml.Linq;
 using BlackScreenDetect.Properties;
 using static System.Reflection.Assembly;
@@ -33,7 +35,9 @@ namespace BlackScreenDetect
         {
             InitializeComponent();
             _loadForm = new Loading(this);
-            
+            _rtbLog.BackColor = Data.Instance.LogBackColor;
+            _rtbLog.ForeColor = Data.Instance.RegularColor;
+            _rtbLog.Font = Data.Instance.LogFont;
 
         }
 
@@ -48,10 +52,11 @@ namespace BlackScreenDetect
         {
             _rtbLog.Invoke(() =>
             {
-                if (Equals(color, default(Color))) color = Color.White;
+                if (Equals(color, default(Color))) color = Data.Instance.RegularColor;
                 if (_rtbLog.Lines.Length > 1000)
                     _rtbLog.Clear();
-                _rtbLog.SelectionColor = Color.White;
+                _rtbLog.SelectionColor = Data.Instance.RegularColor;
+                _rtbLog.SelectionFont = Data.Instance.LogFont;
                 _rtbLog.AppendText($"{DateTime.Now}: ");
                 _rtbLog.SelectionColor = color;
                 _rtbLog.AppendText($"{text}\n");
@@ -60,7 +65,7 @@ namespace BlackScreenDetect
             return $"{DateTime.Now}: {text}";
         }
 
-        private static IEnumerable<string> Filtered_List(IList<string> list)
+        private static IEnumerable<string> Filtered_List(IEnumerable<string> list)
         {
             return (from name in list
                     let extension = Path.GetExtension(name)
@@ -70,21 +75,36 @@ namespace BlackScreenDetect
                     select name).ToList();
         }
 
-        private static IList<string> GetFiles(string path, string pattern)
+        public static IEnumerable<string> GetFiles(string rootFolderPath, string fileSearchPattern)
         {
-            var files = new List<string>();
-
-            try
+            var pending = new Queue<string>();
+            pending.Enqueue(rootFolderPath);
+            while (pending.Count > 0)
             {
-                files.AddRange(Directory.GetFiles(path, pattern, SearchOption.TopDirectoryOnly));
-                foreach (var directory in Directory.GetDirectories(path)) files.AddRange(GetFiles(directory, pattern));
+                rootFolderPath = pending.Dequeue();
+                string[] tmp;
+                try
+                {
+                    tmp = Directory.GetFiles(rootFolderPath, fileSearchPattern);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    continue;
+                }
+                catch (IOException)
+                {
+                    continue;
+                }
+                foreach (var t in tmp)
+                {
+                    yield return t;
+                }
+                tmp = Directory.GetDirectories(rootFolderPath);
+                foreach (var t in tmp)
+                {
+                    pending.Enqueue(t);
+                }
             }
-            catch
-            {
-                Console.WriteLine(@"Opps!");
-            }
-
-            return files;
         }
 
         private void folderToolStripMenuItem_Click(object sender, EventArgs e)
@@ -93,14 +113,14 @@ namespace BlackScreenDetect
             var result = fs.ShowDialog();
             if (!result) return;
             if (!Directory.Exists(fs.FileName)) return;
-            var allfiles = Filtered_List(GetFiles(fs.FileName, "*.*"));
-            foreach (var file in allfiles)
+            _bwSearchFolders.RunWorkerAsync(new List<object> { fs.FileName, "*.*", 0 });
+            while (_bwSearchFolders.IsBusy)
             {
-                if (file == null || Data.Instance.WatchedFolders.Contains(file)) return;
-                Data.Instance.WatchedFolders.Add(file);
-                Data.Save();
+                Cursor = Cursors.WaitCursor;
+                Application.DoEvents();
             }
-
+            Cursor = Cursors.Arrow;
+            Data.Save();
             InitializeUi();
         }
 
@@ -114,19 +134,56 @@ namespace BlackScreenDetect
                 FilterIndex = 1,
                 RestoreDirectory = false,
                 Multiselect = true
-
             };
             var result = fs.ShowDialog();
             if (result != DialogResult.OK) return;
-            var fileName = fs.FileNames;
-            foreach (var file in fileName)
+            var fileNames = fs.FileNames;
+            _bwSearchFolders.RunWorkerAsync(new List<object> { fileNames, "file", 0 });
+            while (_bwSearchFolders.IsBusy)
             {
-                if (file == null || Data.Instance.WatchedFolders.Contains(file)) return;
-                Data.Instance.WatchedFolders.Add(file);
-                Data.Save();
+                Cursor = Cursors.WaitCursor;
+                Application.DoEvents();
             }
+            Cursor = Cursors.Arrow;
+            Data.Save();
             InitializeUi();
 
+        }
+
+        private void _bwSearch_DoWork(object sender, DoWorkEventArgs e)
+        {
+            var folders = (List<object>)e.Argument;
+            if (folders == null) return;
+            var i = (int)folders[2];
+            var allfiles = folders[1].Equals("file")
+                ? folders[0]
+                : Filtered_List(GetFiles((string)folders[0], (string)folders[1]));
+            if (allfiles is string)
+            {
+                if (allfiles != null || !Data.Instance.WatchedFolders.Contains(allfiles))
+                {
+                    Data.Instance.WatchedFolders.Add(allfiles as string);
+                    i++;
+                }
+            }
+            else
+            {
+                foreach (var file in (IEnumerable<string>)allfiles)
+                {
+                    if (file == null || Data.Instance.WatchedFolders.Contains(file)) continue;
+                    Data.Instance.WatchedFolders.Add(file);
+                    i++;
+                }
+            }
+            e.Result = i;
+
+        }
+
+        private void _bwSearchFolders_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            _drog = (int)e.Result;
+            if (!_isDrog)
+                Log($@"{e.Result} items were added to list", Data.Instance.SuccessColor);
         }
 
         private void _tsBtnRemoveFolder_Click(object sender, EventArgs e)
@@ -156,6 +213,8 @@ namespace BlackScreenDetect
         {
             if (new ProgramSettings().ShowDialog(this) != DialogResult.OK)
                 return;
+            _rtbLog.BackColor = Data.Instance.LogBackColor;
+            InitializeUi();
             Log("Saved settings.");
         }
 
@@ -167,28 +226,26 @@ namespace BlackScreenDetect
             var ffmpeg = Data.Instance.FFmpegBinLib;
             if (string.IsNullOrEmpty(ffmpeg))
             {
-                Log(@"You Have to Configure the ffmpeg bin Folder First", Color.Red);
+                Log(@"You Have to Configure the ffmpeg bin Folder First", Data.Instance.ErrorColor);
                 return;
             }
             if (Directory.Exists(ffmpeg))
             {
-                var files = GetFiles(ffmpeg, "*.exe");
+                var files = Directory.GetFiles(ffmpeg, "*.exe");
                 if (!files.Contains($@"{ffmpeg}\ffmpeg.exe") || !files.Contains($@"{ffmpeg}\ffprobe.exe"))
                 {
-                    const string baseUrl = "https://ffmpeg.zeranoe.com/builds/";
-                    var bit = Environment.Is64BitOperatingSystem
-                        ? "win64/static/ffmpeg-latest-win64-static.7z"
-                        : "/win32/static/ffmpeg-latest-win32-static.7z";
-                    Log(@"The ffmpeg bin dir you set does not contain all the necessary binaries.", Color.Red);
-                    Log(@"Please recheck and confirm it's the right folder.", Color.Red);
-                    Log($@"Last version can be found here: {baseUrl}{bit}", Color.Red);
+                    var bit = Environment.Is64BitOperatingSystem ? "win64" : "win32";
+                    var url = $@"https://ffmpeg.zeranoe.com/builds/{bit}/static/ffmpeg-latest-{bit}-static.7z";
+                    Log(@"The ffmpeg bin dir you set does not contain all the necessary binaries.", Data.Instance.ErrorColor);
+                    Log(@"Please recheck and confirm it's the right folder.", Data.Instance.ErrorColor);
+                    Log($@"Last version can be found here: {url}", Data.Instance.ErrorColor);
                     return;
                 }
             }
             var output = Data.Instance.OutputFolder;
             if (string.IsNullOrEmpty(output))
             {
-                Log(@"You Have to Configure the Output Folder First", Color.Red);
+                Log(@"You Have to Configure the Output Folder First", Data.Instance.ErrorColor);
                 return;
             }
             foreach (var selectedItem in SelectedItems)
@@ -209,7 +266,7 @@ namespace BlackScreenDetect
             {
                 Text = @"BlackScreenDetect";
 
-                Log("No Item Was Selected", Color.Red);
+                Log("No Item Was Selected", Data.Instance.ErrorColor);
                 return;
             }
 
@@ -219,7 +276,7 @@ namespace BlackScreenDetect
                 _loadForm._niLoading.Visible = false;
                 if (!Visible) Visible = true;
                 BringToFront();
-                Log("All the processes have been aborted", Color.Red);
+                Log("All the processes have been aborted", Data.Instance.ErrorColor);
                 _loadForm.IsAbortAll = false;
                 _loadForm.IsAbort = false;
                 _abort = _done = 0;
@@ -231,8 +288,8 @@ namespace BlackScreenDetect
                 _loadForm._niLoading.Visible = false;
                 if (!Visible) Visible = true;
                 BringToFront();
-                Log("All pending processes have been aborted", Color.Red);
-                Log($"{SelectedItems.Length - _abort} reports have been saved to: {Data.Instance.OutputFolder}", Color.Gold);
+                Log("All pending processes have been aborted", Data.Instance.ErrorColor);
+                Log($"{SelectedItems.Length - _abort} reports have been saved to: {Data.Instance.OutputFolder}", Data.Instance.InfoColor);
                 _loadForm.IsAbortAll = false;
                 _loadForm.IsAbort = false;
                 _abort = _done = 0;
@@ -251,27 +308,27 @@ namespace BlackScreenDetect
             if (_done == SelectedItems.Length)
             {
                 msg = "Done Processing All Selected Items";
-                color = Color.Gold;
+                color = Data.Instance.InfoColor;
             }
 
             else
             {
 
                 msg = $"Done Processing {_done} Items out of {SelectedItems.Length} Items";
-                color = Color.SaddleBrown;
+                color = Data.Instance.WarrningColor;
             }
 
             Log(msg, color);
-            Log($"All the reports are saved to: {Data.Instance.OutputFolder}", Color.Gold);
+            Log($"All the reports are saved to: {Data.Instance.OutputFolder}", Data.Instance.InfoColor);
             _abort = _done = 0;
             if (!Data.Instance.PlaySounds) return;
             var startSoundPlayer = new SoundPlayer(Resources.Done);
             startSoundPlayer.Play();
         }
 
-        private double _time;
-        public string Percentage;
-        public string VideoName;
+        private double Time { get; set; }
+        public string Percentage { get; private set; }
+        private string VideoName { get; set; }
 
         private void _bwProcess_DoWork(object sender, DoWorkEventArgs e)
         {
@@ -290,7 +347,7 @@ namespace BlackScreenDetect
                 var valid = psExec.Invoke<string>().ToList();
                 if (valid.Any(item => item.Contains("Invalid data found")))
                 {
-                    Log($@"{VideoName} is Invalid Media File", Color.Red);
+                    Log($@"{VideoName} is Invalid Media File", Data.Instance.ErrorColor);
                     return;
                 }
                 psExec.Commands.Clear();
@@ -299,7 +356,7 @@ namespace BlackScreenDetect
                 var tm = psExec.Invoke<string>().ToList();
                 foreach (var item in tm)
                 {
-                    _time = Convert.ToDouble($"{Convert.ToDouble(item):0.000}");
+                    Time = Convert.ToDouble($"{Convert.ToDouble(item):0.000}");
                 }
                 psExec.Commands.Clear();
                 var scriptText =
@@ -307,7 +364,7 @@ namespace BlackScreenDetect
                 psExec.AddScript(scriptText);
                 var result = "";
                 var output = new ObservableCollection<string>();
-                var currenTime = DateTime.Now;
+                //var currenTime = DateTime.Now;
                 //Log($@"Processing {VideoName}    ", Color.BlueViolet);
                 //_rtbLog.Invoke(() =>
                 //{
@@ -324,7 +381,7 @@ namespace BlackScreenDetect
                         else if (tmMatch.Success)
                         {
                             var seconds = TimeSpan.Parse(tmMatch.Groups["time"].Value).TotalSeconds;
-                            Percentage = $"{seconds / _time * 100:0.00}";
+                            Percentage = $"{seconds / Time * 100:0.00}";
                             _rtbLog.Invoke(() =>
                             {
                                 ChangeLine(_rtbLog, _rtbLog.Lines.Length - 2, $@"{_text} [Processing... {Percentage}%]");
@@ -334,14 +391,11 @@ namespace BlackScreenDetect
                     }
                 };
                 psExec.Invoke(null, output);
-                //var scriptOutput = psExec.Invoke<string>().ToList();
-                //psExec.Commands.Clear();
-
                 if (_loadForm.IsAbort)
                 {
                     this.Invoke(() => { Text = @"BlackScreenDetect"; });
                     _abort++;
-                    Log("Process Was Aborted...", Color.Red);
+                    Log("Process Was Aborted...", Data.Instance.ErrorColor);
                     _loadForm.IsAbort = false;
                     return;
                 }
@@ -373,9 +427,9 @@ namespace BlackScreenDetect
                         : $@"{time.Seconds:00}.{time.Milliseconds:000} Seconds";
                 _rtbLog.Invoke(() =>
                 {
-                    ChangeLine(_rtbLog, _rtbLog.Lines.Length - 2, $@"{_text} [{Percentage}%]");
+                    ChangeLine(_rtbLog, _rtbLog.Lines.Length - 2, $@"{_text} [100%]");
                 });
-                Log($@"Done Proessing {VideoName} in {timeFormat}", Color.Green);
+                Log($@"Done Proessing {VideoName} in {timeFormat}", Data.Instance.SuccessColor);
                 _done++;
             }
         }
@@ -431,68 +485,16 @@ namespace BlackScreenDetect
         }
 
 
-        private void _bwUpdate_DoWork(object sender, DoWorkEventArgs e)
-        {
-            var downloadUrl = @"";
-            Version newVersion = null;
-            XElement change = null;
-            const string xmlUrl = @"https://oribenhur.github.io/update.xml";
-            var appVersion = GetExecutingAssembly().GetName().Version;
-            var appName = GetExecutingAssembly().GetName().Name.Replace(" ", "_");
-            try
-            {
-                var doc = XDocument.Load(xmlUrl);
-                foreach (var dm in doc.Descendants(appName))
-                {
-                    var versionElement = dm.Element(@"version");
-                    if (versionElement == null) continue;
-                    var urlelEment = dm.Element(@"url");
-                    if (urlelEment == null) continue;
-                    newVersion = new Version(versionElement.Value);
-                    downloadUrl = urlelEment.Value;
-                    change = dm.Element(@"change_log");
-
-                }
-            }
-            catch (Exception exception)
-            {
-                Invoke(new MethodInvoker(delegate { MessageBox.Show(this, exception.Message); }));
-            }
-
-            if (appVersion.CompareTo(newVersion) < 0)
-            {
-                var result = DialogResult.None;
-                Invoke(new MethodInvoker(delegate
-                {
-                    if (change != null)
-                        result = MessageBox.Show(this,
-                            $@"{appName.Replace('_', ' ')} v.{newVersion} is out!{Environment.NewLine}{change.Value}",
-                            @"New Version is avlibale", MessageBoxButtons.YesNo);
-                }));
-
-                if (result == DialogResult.Yes)
-                    Process.Start(downloadUrl);
-            }
-            else
-            {
-                if ((bool)e.Argument)
-                {
-                    Invoke(new MethodInvoker(delegate
-                    {
-                        MessageBox.Show(this, @"You Are Running The Last Version.", @"No New Updates");
-                    }));
-                }
-            }
-        }
-
         private void _miCheckForUpdates_Click(object sender, EventArgs e)
         {
-            _bwUpdate.RunWorkerAsync(true);
+            if (!_bwUpdate.IsBusy)
+                _bwUpdate.RunWorkerAsync(true);
         }
 
         private void MainForm_Shown(object sender, EventArgs e)
         {
-            _bwUpdate.RunWorkerAsync(false);
+            if (!_bwUpdate.IsBusy)
+                _bwUpdate.RunWorkerAsync(false);
         }
 
         private void _miTechnicalDetails_Click(object sender, EventArgs e)
@@ -510,19 +512,53 @@ namespace BlackScreenDetect
             e.Effect = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.All : DragDropEffects.None;
         }
 
+        private int _drog;
+        private bool _isDrog;
         private void _listBoxWatchedItems_DragDrop(object sender, DragEventArgs e)
         {
             var s = (string[])e.Data.GetData(DataFormats.FileDrop, false);
-            int i;
-            for (i = 0; i < s.Length; i++)
+            Cursor = Cursors.WaitCursor;
+            _drog = 0;
+            _isDrog = true;
+            foreach (var item in s)
             {
-                _listBoxWatchedItems.Items.Add(s[i]);
-                var str = s[i];
-                if (str != null && !Data.Instance.WatchedFolders.Contains(str))
-                    Data.Instance.WatchedFolders.Add(str);
+                if (File.GetAttributes(item).HasFlag(FileAttributes.Directory))
+                {
+                    _bwSearchFolders.RunWorkerAsync(new List<object> { item, "*.*", _drog });
+                    while (_bwSearchFolders.IsBusy)
+                    {
+                        Application.DoEvents();
+                    }
+                }
+                else
+                {
+                    var ext = Path.GetExtension(item);
+                    var filename = ext.Equals(".avi") || ext.Equals(".mp4") || ext.Equals(".mkv") ? item : "";
+                    if (filename.Equals("")) continue;
+                    _bwSearchFolders.RunWorkerAsync(new List<object> { filename, "file", _drog });
+                    while (_bwSearchFolders.IsBusy)
+                    {
+                        Application.DoEvents();
+                    }
+                }
             }
+            _isDrog = false;
+            Cursor = Cursors.Arrow;
             Data.Save();
+            Log($@"{_drog} items were added to list", Data.Instance.SuccessColor);
             InitializeUi();
+
+            //int i;
+            //for (i = 0; i < s.Length; i++)
+            //{
+            //    if(s[i] is Directory) Filtered_List(GetFiles(s[i]))
+            //    _listBoxWatchedItems.Items.Add(s[i]);
+            //    var str = s[i];
+            //    if (str != null && !Data.Instance.WatchedFolders.Contains(str))
+            //        Data.Instance.WatchedFolders.Add(str);
+            //}
+            //Data.Save();
+
         }
         private void _listBoxWatchedItems_MouseDown(object sender, MouseEventArgs e)
         {
@@ -575,6 +611,7 @@ namespace BlackScreenDetect
 
         private void _rtbLog_MouseDown(object sender, MouseEventArgs e)
         {
+            //if(e.Button == MouseButtons.Right) _rtbLog.Cursor = Cursors.Arrow;
             var contextMenu = new ContextMenu();
             var clear = new MenuItem("Clear Log");
             var copyText = new MenuItem("Copy Text");
@@ -629,6 +666,143 @@ namespace BlackScreenDetect
                 catch (Exception exception)
                 {
                     Console.WriteLine(exception);
+                    if (!Data.Instance.Debug) continue;
+                    var outFile = $@"{ Data.Instance.OutputFolder}\Error Log.txt";
+                    using (var sw = File.AppendText(outFile))
+                    {
+                        sw.WriteLine($"-----------------{DateTime.Now}-----------------");
+                        sw.WriteLine(Regex.Replace(exception.ToString(), @"System\.Net\.WebException: The remote name could not be resolved: '(?<url>.*)'", "System.Net.WebException: The remote name could not be resolved"));
+                        sw.WriteLine("------------------------------------------------------" + Environment.NewLine + Environment.NewLine);
+                    }
+                }
+            }
+        }
+
+        private void _bwUpdate_DoWork(object sender, DoWorkEventArgs e)
+        {
+            var downloadUrl = @"";
+            Version newVersion = null;
+            XElement change = null;
+            //const string xmlUrl = @"https://oribenhur.github.io/update.xml";
+            const string xmlUrl = @"https://onedrive.live.com/download?cid=D9DE3B3ACC374428&resid=D9DE3B3ACC374428%217999&authkey=ADJwQu1VOTfAOVg";
+            var appVersion = GetExecutingAssembly().GetName().Version;
+            var appName = GetExecutingAssembly().GetName().Name.Replace(" ", "_");
+            try
+            {
+                var doc = XDocument.Load(xmlUrl);
+                foreach (var dm in doc.Descendants(appName))
+                {
+                    var versionElement = dm.Element(@"version");
+                    if (versionElement == null) continue;
+                    var urlelEment = dm.Element(@"url");
+                    if (urlelEment == null) continue;
+                    newVersion = new Version(versionElement.Value);
+                    downloadUrl = urlelEment.Value;
+                    change = dm.Element(@"change_log");
+                }
+
+                if (appVersion.CompareTo(newVersion) < 0)
+                {
+                    if (Data.Instance.NoMb)
+                    {
+                        Log($@"v.{newVersion} is out! You can get it at {downloadUrl}", Data.Instance.InfoColor);
+                    }
+                    else
+                    {
+                        var result = DialogResult.None;
+                        Invoke(new MethodInvoker(delegate
+                        {
+                            if (change != null)
+                                result = MessageBox.Show(this,
+                                    $@"{appName.Replace('_', ' ')} v.{newVersion} is out!{Environment.NewLine}You are running {appName.Replace('_', ' ')} v.{appVersion} {Environment.NewLine}{change.Value}",
+                                    $@"v.{newVersion} is out!", MessageBoxButtons.YesNo);
+                        }));
+
+                        if (result == DialogResult.Yes)
+                            Process.Start(downloadUrl);
+                    }
+
+                }
+                else
+                {
+                    if (!(bool)e.Argument) return;
+                    if (Data.Instance.NoMb)
+                    {
+                        Log(@"You Are Running The Latest Version.", Data.Instance.SuccessColor);
+                    }
+                    else
+                    {
+                        Invoke(new MethodInvoker(delegate
+                        {
+                            MessageBox.Show(this, @"You Are Running The Latest Version.", @"No New Updates");
+                        }));
+                    }
+                }
+            }
+            catch (Exception exp)
+            {
+
+                if (exp is WebException)
+                {
+                    var m = Regex.Match(exp.Message, "[0-9]{3}");
+                    if (!Data.Instance.NoMb)
+                    {
+                        Invoke(m.Success
+                            ? delegate
+                            {
+                                MessageBox.Show(this,
+                                    $@"Remote resource could not be reached{
+                                            Environment.NewLine
+                                        }Got Error Code {m.Value}", @"Update Error");
+                            }
+                        : new MethodInvoker(delegate
+                        {
+                            MessageBox.Show(this,
+                                $@"Couldn't reach update server{Environment.NewLine}Please cheack again later", @"Update Error");
+                        }));
+                    }
+                    else
+                    {
+                        if (m.Success)
+                        {
+                            Log(@"Update Error", Data.Instance.ErrorColor);
+                            Log(@"Remote resource could not be reached", Data.Instance.ErrorColor);
+                            Log($@"Got Error Code {m.Value}", Data.Instance.ErrorColor);
+                        }
+                        else
+                        {
+                            Log(@"Update Error", Data.Instance.ErrorColor);
+                            Log(@"Couldn't reach update server", Data.Instance.ErrorColor);
+                            Log(@"Please cheack again later", Data.Instance.ErrorColor);
+                        }
+                    }
+                }
+
+                else if (exp is XmlException)
+                {
+                    if (Data.Instance.NoMb)
+                    {
+                        Invoke(new MethodInvoker(delegate
+                        {
+                            MessageBox.Show(this, exp.Message, @"Xml Parsing Error");
+                        }));
+                    }
+                    else
+                    {
+                        Log(@"Xml Parsing Error", Data.Instance.ErrorColor);
+                        Log(exp.Message, Data.Instance.ErrorColor);
+                    }
+                }
+
+                if (Data.Instance.Debug)
+                {
+                    var outFile = $@"{ Data.Instance.OutputFolder}\Error Log.txt";
+                    using (var sw = File.AppendText(outFile))
+                    {
+                        sw.WriteLine($"-----------------{DateTime.Now}-----------------");
+                        sw.WriteLine(Regex.Replace(exp.ToString(), @"System\.Net\.WebException: The remote name could not be resolved: '(?<url>.*)'", "System.Net.WebException: The remote name could not be resolved"));
+                        sw.WriteLine("------------------------------------------------------" + Environment.NewLine + Environment.NewLine);
+                    }
                 }
             }
         }

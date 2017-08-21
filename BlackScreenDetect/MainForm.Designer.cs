@@ -30,9 +30,9 @@
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
-            this._rtbLog = new System.Windows.Forms.RichTextBox();
             this._listBoxWatchedItems = new System.Windows.Forms.ListBox();
-            this.panel1 = new System.Windows.Forms.Panel();
+            this._pnMain = new System.Windows.Forms.Panel();
+            this._rtbLog = new System.Windows.Forms.RichTextBox();
             this._tsMain = new System.Windows.Forms.ToolStrip();
             this.processToolStripButton = new System.Windows.Forms.ToolStripButton();
             this._tsBtnRemoveFolder = new System.Windows.Forms.ToolStripButton();
@@ -50,24 +50,11 @@
             this._bwUpdate = new System.ComponentModel.BackgroundWorker();
             this._cmsListBox = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.openFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.panel1.SuspendLayout();
+            this._bwSearchFolders = new System.ComponentModel.BackgroundWorker();
+            this._pnMain.SuspendLayout();
             this._tsMain.SuspendLayout();
             this._cmsListBox.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // _rtbLog
-            // 
-            this._rtbLog.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(36)))), ((int)(((byte)(86)))));
-            this._rtbLog.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this._rtbLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this._rtbLog.ForeColor = System.Drawing.Color.White;
-            this._rtbLog.Location = new System.Drawing.Point(0, 185);
-            this._rtbLog.Name = "_rtbLog";
-            this._rtbLog.Size = new System.Drawing.Size(946, 232);
-            this._rtbLog.TabIndex = 1;
-            this._rtbLog.Text = "";
-            this._rtbLog.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this._rtbLog_LinkClicked);
-            this._rtbLog.MouseDown += new System.Windows.Forms.MouseEventHandler(this._rtbLog_MouseDown);
             // 
             // _listBoxWatchedItems
             // 
@@ -77,23 +64,39 @@
             this._listBoxWatchedItems.Location = new System.Drawing.Point(0, 25);
             this._listBoxWatchedItems.Name = "_listBoxWatchedItems";
             this._listBoxWatchedItems.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
-            this._listBoxWatchedItems.Size = new System.Drawing.Size(946, 160);
+            this._listBoxWatchedItems.Size = new System.Drawing.Size(946, 202);
             this._listBoxWatchedItems.TabIndex = 0;
             this._listBoxWatchedItems.DragDrop += new System.Windows.Forms.DragEventHandler(this._listBoxWatchedItems_DragDrop);
             this._listBoxWatchedItems.DragEnter += new System.Windows.Forms.DragEventHandler(this._listBoxWatchedItems_DragEnter);
             this._listBoxWatchedItems.KeyDown += new System.Windows.Forms.KeyEventHandler(this._listBoxWatchedItems_KeyDown);
             this._listBoxWatchedItems.MouseDown += new System.Windows.Forms.MouseEventHandler(this._listBoxWatchedItems_MouseDown);
             // 
-            // panel1
+            // _pnMain
             // 
-            this.panel1.Controls.Add(this._listBoxWatchedItems);
-            this.panel1.Controls.Add(this._rtbLog);
-            this.panel1.Controls.Add(this._tsMain);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.panel1.Location = new System.Drawing.Point(0, 0);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(946, 417);
-            this.panel1.TabIndex = 2;
+            this._pnMain.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
+            this._pnMain.Controls.Add(this._listBoxWatchedItems);
+            this._pnMain.Controls.Add(this._rtbLog);
+            this._pnMain.Controls.Add(this._tsMain);
+            this._pnMain.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._pnMain.Location = new System.Drawing.Point(0, 0);
+            this._pnMain.Name = "_pnMain";
+            this._pnMain.Size = new System.Drawing.Size(946, 561);
+            this._pnMain.TabIndex = 2;
+            // 
+            // _rtbLog
+            // 
+            this._rtbLog.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(36)))), ((int)(((byte)(86)))));
+            this._rtbLog.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this._rtbLog.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
+            this._rtbLog.ForeColor = System.Drawing.Color.White;
+            this._rtbLog.Location = new System.Drawing.Point(0, 227);
+            this._rtbLog.Name = "_rtbLog";
+            this._rtbLog.ReadOnly = true;
+            this._rtbLog.Size = new System.Drawing.Size(946, 334);
+            this._rtbLog.TabIndex = 1;
+            this._rtbLog.Text = "";
+            this._rtbLog.LinkClicked += new System.Windows.Forms.LinkClickedEventHandler(this._rtbLog_LinkClicked);
+            this._rtbLog.MouseDown += new System.Windows.Forms.MouseEventHandler(this._rtbLog_MouseDown);
             // 
             // _tsMain
             // 
@@ -225,29 +228,34 @@
             this._cmsListBox.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.openFolderToolStripMenuItem});
             this._cmsListBox.Name = "_cmListBox";
-            this._cmsListBox.Size = new System.Drawing.Size(140, 26);
+            this._cmsListBox.Size = new System.Drawing.Size(202, 26);
             // 
             // openFolderToolStripMenuItem
             // 
             this.openFolderToolStripMenuItem.Name = "openFolderToolStripMenuItem";
-            this.openFolderToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
-            this.openFolderToolStripMenuItem.Text = "Open Folder";
+            this.openFolderToolStripMenuItem.Size = new System.Drawing.Size(201, 22);
+            this.openFolderToolStripMenuItem.Text = "Open Containing Folder";
             this.openFolderToolStripMenuItem.Click += new System.EventHandler(this.Open);
+            // 
+            // _bwSearchFolders
+            // 
+            this._bwSearchFolders.DoWork += new System.ComponentModel.DoWorkEventHandler(this._bwSearch_DoWork);
+            this._bwSearchFolders.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this._bwSearchFolders_RunWorkerCompleted);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(946, 417);
-            this.Controls.Add(this.panel1);
+            this.ClientSize = new System.Drawing.Size(946, 561);
+            this.Controls.Add(this._pnMain);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "MainForm";
             this.Text = "BlackScreenDetect";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.MainForm_FormClosed);
             this.Load += new System.EventHandler(this.MainForm_Load);
             this.Shown += new System.EventHandler(this.MainForm_Shown);
-            this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
+            this._pnMain.ResumeLayout(false);
+            this._pnMain.PerformLayout();
             this._tsMain.ResumeLayout(false);
             this._tsMain.PerformLayout();
             this._cmsListBox.ResumeLayout(false);
@@ -256,10 +264,8 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.RichTextBox _rtbLog;
         private System.Windows.Forms.ListBox _listBoxWatchedItems;
-        private System.Windows.Forms.Panel panel1;
+        private System.Windows.Forms.Panel _pnMain;
         private System.Windows.Forms.ToolStrip _tsMain;
         private System.Windows.Forms.ToolStripButton processToolStripButton;
         private System.Windows.Forms.ToolStripButton _tsBtnRemoveFolder;
@@ -277,6 +283,8 @@
         private System.Windows.Forms.ToolStripMenuItem _miTechnicalDetails;
         private System.Windows.Forms.ContextMenuStrip _cmsListBox;
         private System.Windows.Forms.ToolStripMenuItem openFolderToolStripMenuItem;
+        private System.ComponentModel.BackgroundWorker _bwSearchFolders;
+        public System.Windows.Forms.RichTextBox _rtbLog;
     }
 }
 
