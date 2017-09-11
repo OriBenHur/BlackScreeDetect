@@ -677,8 +677,8 @@ namespace BlackScreenDetect
             var downloadUrl = @"";
             Version newVersion = null;
             XElement change = null;
-            //const string xmlUrl = @"https://oribenhur.github.io/update.xml";
-            const string xmlUrl = @"https://onedrive.live.com/download?cid=D9DE3B3ACC374428&resid=D9DE3B3ACC374428%217999&authkey=ADJwQu1VOTfAOVg";
+            const string xmlUrl = @"https://oribenhur.github.io/update.xml";
+            //const string xmlUrl = @"https://onedrive.live.com/download?cid=D9DE3B3ACC374428&resid=D9DE3B3ACC374428%217999&authkey=ADJwQu1VOTfAOVg";
             var appVersion = GetExecutingAssembly().GetName().Version;
             var appName = GetExecutingAssembly().GetName().Name.Replace(" ", "_");
             try
