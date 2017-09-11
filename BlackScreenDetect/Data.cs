@@ -70,7 +70,7 @@ namespace BlackScreenDetect
                 WatchedFolders = new List<string>();
 
             if (string.IsNullOrEmpty(Duration))
-                Duration = "1";
+                Duration = "0.2";
 
             if (string.IsNullOrEmpty(PicThreshold))
                 PicThreshold = "0.98";
@@ -108,7 +108,7 @@ namespace BlackScreenDetect
                 SuccessColor = Color.Green;
 
             if(WarrningColor.IsEmpty)
-                InfoColor = Color.Gold;
+                WarrningColor = Color.Gold;
 
             if (ErrorColor.IsEmpty)
                 ErrorColor = Color.Red;

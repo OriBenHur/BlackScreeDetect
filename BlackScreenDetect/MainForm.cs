@@ -337,7 +337,7 @@ namespace BlackScreenDetect
             {
                 var startTime = DateTime.Now.TimeOfDay;
                 var ffmpeg = Data.Instance.FFmpegBinLib;
-                var duration = Data.Instance.Duration ?? "1";
+                var duration = Data.Instance.Duration ?? "0.2";
                 var picThreshold = Data.Instance.PicThreshold ?? "0.98";
                 var pixThreshold = Data.Instance.PixThreshold ?? "0";
                 var filePath = e.Argument as string;
@@ -364,12 +364,6 @@ namespace BlackScreenDetect
                 psExec.AddScript(scriptText);
                 var result = "";
                 var output = new ObservableCollection<string>();
-                //var currenTime = DateTime.Now;
-                //Log($@"Processing {VideoName}    ", Color.BlueViolet);
-                //_rtbLog.Invoke(() =>
-                //{
-                //    _rtbLog.AppendText("\n");
-                //});
                 output.CollectionChanged += (s, r) =>
                 {
                     foreach (var item in r.NewItems)

@@ -30,8 +30,7 @@ namespace BlackScreenDetect
 
         private void Prograss_Move(object sender, System.EventArgs e)
         {
-            if(Visible)
-                CheckLoction();
+            if(Visible) CheckLoction();
         }
 
         private void CheckLoction()
@@ -62,6 +61,11 @@ namespace BlackScreenDetect
         }
 
         private void Prograss_VisibleChanged(object sender, System.EventArgs e)
+        {
+            if (Visible) CheckLoction();
+        }
+
+        private void Prograss_SizeChanged(object sender, System.EventArgs e)
         {
             if (Visible) CheckLoction();
         }

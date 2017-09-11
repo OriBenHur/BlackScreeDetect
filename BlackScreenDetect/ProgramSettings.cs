@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Text;
@@ -225,7 +224,7 @@ namespace BlackScreenDetect
         {
             _tbFFmpegLocation.Text = "";
             _tbOutputfolder.Text = "";
-            _tbdurtion.Text = @"1";
+            _tbdurtion.Text = @"0.2";
             _tbtpixthreshold.Text = @"0";
             _tbpicthreshold.Text = @"0.98";
             _cbPlaySounds.Checked = true;

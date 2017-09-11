@@ -84,6 +84,7 @@
             this.Text = "Prograss";
             this.TopMost = true;
             this.TransparencyKey = System.Drawing.Color.White;
+            this.SizeChanged += new System.EventHandler(this.Prograss_SizeChanged);
             this.VisibleChanged += new System.EventHandler(this.Prograss_VisibleChanged);
             this.Move += new System.EventHandler(this.Prograss_Move);
             this.panel1.ResumeLayout(false);

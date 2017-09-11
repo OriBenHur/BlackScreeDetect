@@ -9,7 +9,7 @@ namespace BlackScreenDetect
     public partial class Loading : Form
     {
         private readonly MainForm _mf;
-        private readonly Prograss _prograss;
+        private Prograss _prograss;
         public bool IsAbort { get; set; }
         public bool IsAbortAll;
         private bool _isLoaded;
@@ -34,9 +34,6 @@ namespace BlackScreenDetect
             _cmsSizes.Items.Add(_tshComboBox);
             _cmsSizes.Items.Add(_tsAbort);
             _cmsSizes.Items.Add(_tsAbortAll);
-            //var csm = new ToolStripControlHost(_cmsSizes);
-            //_cmsIcon.Items.Add(csm);
-            //_cmsIcon.Items.Add(_tsOpenMain);
             BackColor = Color.White;
             TransparencyKey = Color.White;
             _mf = form;
@@ -195,32 +192,6 @@ namespace BlackScreenDetect
             _niLoading.Visible = !_mf.Visible;
             _mf.BringToFront();
         }
-        //private void White_Clicked(object sender, EventArgs e)
-        //{
-        //    _prograss.label1.BackColor = Color.White;
-        //    _prograss.label1.ForeColor = Color.FromArgb(5,5,5);
-        //    Data.Instance.BackColor = Color.White;
-        //    Data.Instance.ForeColorColor = Color.FromArgb(5, 5, 5); ;
-        //    Data.Save();
-        //}
-
-        //private void Gray_Clicked(object sender, EventArgs e)
-        //{
-        //    _prograss.label1.BackColor = Color.Gray;
-        //    _prograss.label1.ForeColor = Color.White;
-        //    Data.Instance.BackColor = Color.Gray;
-        //    Data.Instance.ForeColorColor = Color.White;
-        //    Data.Save();
-        //}
-
-        //private void None_Clicked(object sender, EventArgs e)
-        //{
-        //    _prograss.label1.BackColor = Color.Black;
-        //    _prograss.label1.ForeColor = Color.FromArgb(5, 5, 5);
-        //    Data.Instance.BackColor = Color.Black;
-        //    Data.Instance.ForeColorColor = Color.FromArgb(5, 5, 5);
-        //    Data.Save();
-        //}
 
         private void Loading_LocationChanged(object sender, EventArgs e)
         {
@@ -250,6 +221,19 @@ namespace BlackScreenDetect
         private void Loading_Load(object sender, EventArgs e)
         {
             _isLoaded = true;
+            if (_prograss.IsDisposed)
+            {
+                _prograss = new Prograss(_mf, this)
+                {
+                    Opacity = _tsOpacity.Value * 0.01,
+                    label1 =
+                    {
+                        ForeColor = Data.Instance.ForeColorColor,
+                        BackColor = Data.Instance.BackColor
+                    }
+                };
+                
+            }
             _prograss.Show(this);
             _prograss.Visible = false;
             var h = Data.Instance.LoadH;
@@ -273,7 +257,7 @@ namespace BlackScreenDetect
             Data.Instance.Medium = _tsMedium.Checked;
             Data.Instance.Small = _tsSmall.Checked;
             Data.Instance.Opacity = _tsOpacity.Value;
-            CheckLoction();
+            //CheckLoction();
             Data.Instance.LoadX = Location.X;
             Data.Instance.LoadY = Location.Y;
             Data.Save();

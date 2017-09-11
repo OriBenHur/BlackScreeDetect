@@ -52,9 +52,11 @@
             this._btAutoSearch = new System.Windows.Forms.Button();
             this._gbProgramSettings = new System.Windows.Forms.GroupBox();
             this._gbProcessSetting = new System.Windows.Forms.GroupBox();
+            this._lbMoreInfo = new System.Windows.Forms.Label();
             this._gbBehavior = new System.Windows.Forms.GroupBox();
             this._gbLooks = new System.Windows.Forms.GroupBox();
             this._gbConsoleColors = new System.Windows.Forms.GroupBox();
+            this._btRestColors = new System.Windows.Forms.Button();
             this._lbSuccessTextExp = new System.Windows.Forms.Label();
             this._lbInfoTextExp = new System.Windows.Forms.Label();
             this._lbErrorTextExp = new System.Windows.Forms.Label();
@@ -88,8 +90,6 @@
             this._btResetAll = new System.Windows.Forms.Button();
             this._ttAuto = new System.Windows.Forms.ToolTip(this.components);
             this._bwAutoSearch = new System.ComponentModel.BackgroundWorker();
-            this._btRestColors = new System.Windows.Forms.Button();
-            this._lbMoreInfo = new System.Windows.Forms.Label();
             this._gbDirs.SuspendLayout();
             this._gbProgramSettings.SuspendLayout();
             this._gbProcessSetting.SuspendLayout();
@@ -313,7 +313,7 @@
             this._gbProgramSettings.Controls.Add(this._btResetAll);
             this._gbProgramSettings.Location = new System.Drawing.Point(4, 98);
             this._gbProgramSettings.Name = "_gbProgramSettings";
-            this._gbProgramSettings.Size = new System.Drawing.Size(532, 295);
+            this._gbProgramSettings.Size = new System.Drawing.Size(532, 310);
             this._gbProgramSettings.TabIndex = 102;
             this._gbProgramSettings.TabStop = false;
             this._gbProgramSettings.Text = "Behavior and Appearance Settings";
@@ -333,6 +333,19 @@
             this._gbProcessSetting.TabIndex = 103;
             this._gbProcessSetting.TabStop = false;
             this._gbProcessSetting.Text = "Proceess Settings";
+            // 
+            // _lbMoreInfo
+            // 
+            this._lbMoreInfo.Cursor = System.Windows.Forms.Cursors.Help;
+            this._lbMoreInfo.Location = new System.Drawing.Point(169, 1);
+            this._lbMoreInfo.Name = "_lbMoreInfo";
+            this._lbMoreInfo.Size = new System.Drawing.Size(10, 13);
+            this._lbMoreInfo.TabIndex = 107;
+            this._lbMoreInfo.Text = "?";
+            this._lbMoreInfo.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this._lbMoreInfo.Click += new System.EventHandler(this._lbMoreInfo_Click);
+            this._lbMoreInfo.MouseDown += new System.Windows.Forms.MouseEventHandler(this._lbMoreInfo_MouseDown);
+            this._lbMoreInfo.MouseUp += new System.Windows.Forms.MouseEventHandler(this._lbMoreInfo_MouseUp);
             // 
             // _gbBehavior
             // 
@@ -355,7 +368,7 @@
             this._gbLooks.Controls.Add(this._gbFont);
             this._gbLooks.Location = new System.Drawing.Point(192, 24);
             this._gbLooks.Name = "_gbLooks";
-            this._gbLooks.Size = new System.Drawing.Size(334, 262);
+            this._gbLooks.Size = new System.Drawing.Size(334, 279);
             this._gbLooks.TabIndex = 10;
             this._gbLooks.TabStop = false;
             this._gbLooks.Text = "Appearance";
@@ -388,17 +401,27 @@
             this._gbConsoleColors.Controls.Add(this._lbWarning);
             this._gbConsoleColors.Location = new System.Drawing.Point(9, 82);
             this._gbConsoleColors.Name = "_gbConsoleColors";
-            this._gbConsoleColors.Size = new System.Drawing.Size(317, 168);
+            this._gbConsoleColors.Size = new System.Drawing.Size(317, 187);
             this._gbConsoleColors.TabIndex = 17;
             this._gbConsoleColors.TabStop = false;
             this._gbConsoleColors.Text = "Console Colors";
+            // 
+            // _btRestColors
+            // 
+            this._btRestColors.Location = new System.Drawing.Point(233, 156);
+            this._btRestColors.Name = "_btRestColors";
+            this._btRestColors.Size = new System.Drawing.Size(75, 23);
+            this._btRestColors.TabIndex = 24;
+            this._btRestColors.Text = "Reset Colors";
+            this._btRestColors.UseVisualStyleBackColor = true;
+            this._btRestColors.Click += new System.EventHandler(this._btRestColors_Click);
             // 
             // _lbSuccessTextExp
             // 
             this._lbSuccessTextExp.AutoSize = true;
             this._lbSuccessTextExp.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this._lbSuccessTextExp.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this._lbSuccessTextExp.Location = new System.Drawing.Point(109, 64);
+            this._lbSuccessTextExp.Location = new System.Drawing.Point(109, 75);
             this._lbSuccessTextExp.Name = "_lbSuccessTextExp";
             this._lbSuccessTextExp.Size = new System.Drawing.Size(68, 20);
             this._lbSuccessTextExp.TabIndex = 23;
@@ -409,7 +432,7 @@
             this._lbInfoTextExp.AutoSize = true;
             this._lbInfoTextExp.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this._lbInfoTextExp.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this._lbInfoTextExp.Location = new System.Drawing.Point(109, 139);
+            this._lbInfoTextExp.Location = new System.Drawing.Point(109, 150);
             this._lbInfoTextExp.Name = "_lbInfoTextExp";
             this._lbInfoTextExp.Size = new System.Drawing.Size(34, 20);
             this._lbInfoTextExp.TabIndex = 22;
@@ -420,7 +443,7 @@
             this._lbErrorTextExp.AutoSize = true;
             this._lbErrorTextExp.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this._lbErrorTextExp.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this._lbErrorTextExp.Location = new System.Drawing.Point(109, 114);
+            this._lbErrorTextExp.Location = new System.Drawing.Point(109, 125);
             this._lbErrorTextExp.Name = "_lbErrorTextExp";
             this._lbErrorTextExp.Size = new System.Drawing.Size(44, 20);
             this._lbErrorTextExp.TabIndex = 21;
@@ -431,7 +454,7 @@
             this._lbWarningTextExp.AutoSize = true;
             this._lbWarningTextExp.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this._lbWarningTextExp.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this._lbWarningTextExp.Location = new System.Drawing.Point(109, 89);
+            this._lbWarningTextExp.Location = new System.Drawing.Point(109, 100);
             this._lbWarningTextExp.Name = "_lbWarningTextExp";
             this._lbWarningTextExp.Size = new System.Drawing.Size(73, 20);
             this._lbWarningTextExp.TabIndex = 20;
@@ -443,7 +466,7 @@
             this._lbRegularTextExp.AutoSize = true;
             this._lbRegularTextExp.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
             this._lbRegularTextExp.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(177)));
-            this._lbRegularTextExp.Location = new System.Drawing.Point(109, 39);
+            this._lbRegularTextExp.Location = new System.Drawing.Point(109, 50);
             this._lbRegularTextExp.Name = "_lbRegularTextExp";
             this._lbRegularTextExp.Size = new System.Drawing.Size(61, 20);
             this._lbRegularTextExp.TabIndex = 19;
@@ -453,7 +476,7 @@
             // 
             this._btResetRegularColor.BackgroundImage = global::BlackScreenDetect.Properties.Resources.Click;
             this._btResetRegularColor.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this._btResetRegularColor.Location = new System.Drawing.Point(186, 36);
+            this._btResetRegularColor.Location = new System.Drawing.Point(186, 47);
             this._btResetRegularColor.Name = "_btResetRegularColor";
             this._btResetRegularColor.Size = new System.Drawing.Size(25, 25);
             this._btResetRegularColor.TabIndex = 18;
@@ -464,7 +487,7 @@
             // 
             this._btResetInfoColor.BackgroundImage = global::BlackScreenDetect.Properties.Resources.Click;
             this._btResetInfoColor.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this._btResetInfoColor.Location = new System.Drawing.Point(186, 136);
+            this._btResetInfoColor.Location = new System.Drawing.Point(186, 147);
             this._btResetInfoColor.Name = "_btResetInfoColor";
             this._btResetInfoColor.Size = new System.Drawing.Size(25, 25);
             this._btResetInfoColor.TabIndex = 17;
@@ -475,7 +498,7 @@
             // 
             this._btResetErrorColor.BackgroundImage = global::BlackScreenDetect.Properties.Resources.Click;
             this._btResetErrorColor.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this._btResetErrorColor.Location = new System.Drawing.Point(186, 111);
+            this._btResetErrorColor.Location = new System.Drawing.Point(186, 122);
             this._btResetErrorColor.Name = "_btResetErrorColor";
             this._btResetErrorColor.Size = new System.Drawing.Size(25, 25);
             this._btResetErrorColor.TabIndex = 16;
@@ -486,7 +509,7 @@
             // 
             this._btResetWarningColor.BackgroundImage = global::BlackScreenDetect.Properties.Resources.Click;
             this._btResetWarningColor.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this._btResetWarningColor.Location = new System.Drawing.Point(186, 86);
+            this._btResetWarningColor.Location = new System.Drawing.Point(186, 97);
             this._btResetWarningColor.Name = "_btResetWarningColor";
             this._btResetWarningColor.Size = new System.Drawing.Size(25, 25);
             this._btResetWarningColor.TabIndex = 15;
@@ -498,7 +521,7 @@
             // 
             this._btResetSuccessColor.BackgroundImage = global::BlackScreenDetect.Properties.Resources.Click;
             this._btResetSuccessColor.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this._btResetSuccessColor.Location = new System.Drawing.Point(186, 61);
+            this._btResetSuccessColor.Location = new System.Drawing.Point(186, 72);
             this._btResetSuccessColor.Name = "_btResetSuccessColor";
             this._btResetSuccessColor.Size = new System.Drawing.Size(25, 25);
             this._btResetSuccessColor.TabIndex = 14;
@@ -508,7 +531,7 @@
             // _lbConsoleBackgroundColor
             // 
             this._lbConsoleBackgroundColor.AutoSize = true;
-            this._lbConsoleBackgroundColor.Location = new System.Drawing.Point(6, 16);
+            this._lbConsoleBackgroundColor.Location = new System.Drawing.Point(6, 27);
             this._lbConsoleBackgroundColor.Name = "_lbConsoleBackgroundColor";
             this._lbConsoleBackgroundColor.Size = new System.Drawing.Size(68, 13);
             this._lbConsoleBackgroundColor.TabIndex = 4;
@@ -517,7 +540,7 @@
             // _pnInfoColor
             // 
             this._pnInfoColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this._pnInfoColor.Location = new System.Drawing.Point(84, 139);
+            this._pnInfoColor.Location = new System.Drawing.Point(84, 150);
             this._pnInfoColor.Name = "_pnInfoColor";
             this._pnInfoColor.Size = new System.Drawing.Size(19, 19);
             this._pnInfoColor.TabIndex = 7;
@@ -526,7 +549,7 @@
             // _pnWarrningColor
             // 
             this._pnWarrningColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this._pnWarrningColor.Location = new System.Drawing.Point(84, 89);
+            this._pnWarrningColor.Location = new System.Drawing.Point(84, 100);
             this._pnWarrningColor.Name = "_pnWarrningColor";
             this._pnWarrningColor.Size = new System.Drawing.Size(19, 19);
             this._pnWarrningColor.TabIndex = 9;
@@ -535,7 +558,7 @@
             // _pnErrorColor
             // 
             this._pnErrorColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this._pnErrorColor.Location = new System.Drawing.Point(84, 114);
+            this._pnErrorColor.Location = new System.Drawing.Point(84, 125);
             this._pnErrorColor.Name = "_pnErrorColor";
             this._pnErrorColor.Size = new System.Drawing.Size(19, 19);
             this._pnErrorColor.TabIndex = 8;
@@ -544,7 +567,7 @@
             // _lbInfo
             // 
             this._lbInfo.AutoSize = true;
-            this._lbInfo.Location = new System.Drawing.Point(6, 142);
+            this._lbInfo.Location = new System.Drawing.Point(6, 153);
             this._lbInfo.Name = "_lbInfo";
             this._lbInfo.Size = new System.Drawing.Size(52, 13);
             this._lbInfo.TabIndex = 12;
@@ -554,7 +577,7 @@
             // 
             this._btBackroundReset.BackgroundImage = global::BlackScreenDetect.Properties.Resources.Click;
             this._btBackroundReset.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this._btBackroundReset.Location = new System.Drawing.Point(186, 10);
+            this._btBackroundReset.Location = new System.Drawing.Point(186, 21);
             this._btBackroundReset.Name = "_btBackroundReset";
             this._btBackroundReset.Size = new System.Drawing.Size(25, 25);
             this._btBackroundReset.TabIndex = 3;
@@ -564,7 +587,7 @@
             // _lbError
             // 
             this._lbError.AutoSize = true;
-            this._lbError.Location = new System.Drawing.Point(6, 117);
+            this._lbError.Location = new System.Drawing.Point(6, 128);
             this._lbError.Name = "_lbError";
             this._lbError.Size = new System.Drawing.Size(56, 13);
             this._lbError.TabIndex = 11;
@@ -573,7 +596,7 @@
             // _pnRegularColor
             // 
             this._pnRegularColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this._pnRegularColor.Location = new System.Drawing.Point(84, 39);
+            this._pnRegularColor.Location = new System.Drawing.Point(84, 50);
             this._pnRegularColor.Name = "_pnRegularColor";
             this._pnRegularColor.Size = new System.Drawing.Size(19, 19);
             this._pnRegularColor.TabIndex = 6;
@@ -582,7 +605,7 @@
             // _pnSuccessColor
             // 
             this._pnSuccessColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this._pnSuccessColor.Location = new System.Drawing.Point(84, 64);
+            this._pnSuccessColor.Location = new System.Drawing.Point(84, 75);
             this._pnSuccessColor.Name = "_pnSuccessColor";
             this._pnSuccessColor.Size = new System.Drawing.Size(19, 19);
             this._pnSuccessColor.TabIndex = 13;
@@ -591,7 +614,7 @@
             // _pnBackColor
             // 
             this._pnBackColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this._pnBackColor.Location = new System.Drawing.Point(84, 13);
+            this._pnBackColor.Location = new System.Drawing.Point(84, 24);
             this._pnBackColor.Name = "_pnBackColor";
             this._pnBackColor.Size = new System.Drawing.Size(19, 19);
             this._pnBackColor.TabIndex = 5;
@@ -600,7 +623,7 @@
             // _lbSuccess
             // 
             this._lbSuccess.AutoSize = true;
-            this._lbSuccess.Location = new System.Drawing.Point(6, 67);
+            this._lbSuccess.Location = new System.Drawing.Point(6, 78);
             this._lbSuccess.Name = "_lbSuccess";
             this._lbSuccess.Size = new System.Drawing.Size(75, 13);
             this._lbSuccess.TabIndex = 10;
@@ -609,7 +632,7 @@
             // _lbRegularText
             // 
             this._lbRegularText.AutoSize = true;
-            this._lbRegularText.Location = new System.Drawing.Point(6, 42);
+            this._lbRegularText.Location = new System.Drawing.Point(6, 53);
             this._lbRegularText.Name = "_lbRegularText";
             this._lbRegularText.Size = new System.Drawing.Size(71, 13);
             this._lbRegularText.TabIndex = 0;
@@ -618,7 +641,7 @@
             // _lbWarning
             // 
             this._lbWarning.AutoSize = true;
-            this._lbWarning.Location = new System.Drawing.Point(6, 92);
+            this._lbWarning.Location = new System.Drawing.Point(6, 103);
             this._lbWarning.Name = "_lbWarning";
             this._lbWarning.Size = new System.Drawing.Size(74, 13);
             this._lbWarning.TabIndex = 9;
@@ -705,7 +728,7 @@
             // 
             // _btResetAll
             // 
-            this._btResetAll.Location = new System.Drawing.Point(7, 263);
+            this._btResetAll.Location = new System.Drawing.Point(16, 280);
             this._btResetAll.Name = "_btResetAll";
             this._btResetAll.Size = new System.Drawing.Size(75, 23);
             this._btResetAll.TabIndex = 9;
@@ -724,29 +747,6 @@
             this._bwAutoSearch.WorkerSupportsCancellation = true;
             this._bwAutoSearch.DoWork += new System.ComponentModel.DoWorkEventHandler(this._bwAutoSearch_DoWork);
             this._bwAutoSearch.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this._bwAutoSearch_RunWorkerCompleted);
-            // 
-            // _btRestColors
-            // 
-            this._btRestColors.Location = new System.Drawing.Point(240, 142);
-            this._btRestColors.Name = "_btRestColors";
-            this._btRestColors.Size = new System.Drawing.Size(75, 23);
-            this._btRestColors.TabIndex = 24;
-            this._btRestColors.Text = "Reset Colors";
-            this._btRestColors.UseVisualStyleBackColor = true;
-            this._btRestColors.Click += new System.EventHandler(this._btRestColors_Click);
-            // 
-            // _lbMoreInfo
-            // 
-            this._lbMoreInfo.Cursor = System.Windows.Forms.Cursors.Help;
-            this._lbMoreInfo.Location = new System.Drawing.Point(165, 103);
-            this._lbMoreInfo.Name = "_lbMoreInfo";
-            this._lbMoreInfo.Size = new System.Drawing.Size(10, 13);
-            this._lbMoreInfo.TabIndex = 107;
-            this._lbMoreInfo.Text = "?";
-            this._lbMoreInfo.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this._lbMoreInfo.Click += new System.EventHandler(this._lbMoreInfo_Click);
-            this._lbMoreInfo.MouseDown += new System.Windows.Forms.MouseEventHandler(this._lbMoreInfo_MouseDown);
-            this._lbMoreInfo.MouseUp += new System.Windows.Forms.MouseEventHandler(this._lbMoreInfo_MouseUp);
             // 
             // ProgramSettings
             // 
