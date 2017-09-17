@@ -13,7 +13,7 @@ namespace BlackScreenDetect
         public bool IsAbort { get; set; }
         public bool IsAbortAll;
         private bool _isLoaded;
-
+        private readonly ToolTip _tt = new ToolTip();
         public Loading(MainForm form)
         {
             InitializeComponent();
@@ -32,12 +32,13 @@ namespace BlackScreenDetect
             _cmsSizes.Items.Add(_tshOpacity);
             _cmsSizes.Items.Add("Pick a Backround Style:");
             _cmsSizes.Items.Add(_tshComboBox);
+            _cmsSizes.Items.Add(_tsiSettings);
             _cmsSizes.Items.Add(_tsAbort);
             _cmsSizes.Items.Add(_tsAbortAll);
             BackColor = Color.White;
             TransparencyKey = Color.White;
             _mf = form;
-            _prograss = new Prograss(_mf , this)
+            _prograss = new Prograss(_mf, this)
             {
                 Opacity = _tsOpacity.Value * 0.01,
                 label1 =
@@ -136,10 +137,20 @@ namespace BlackScreenDetect
         private void pictureBox1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right) return;
+            _prograss.Location = new Point(Left, Top - _prograss.Size.Height - 5);
             _mf.Visible = !_mf.Visible;
-            _niLoading.Visible = !_mf.Visible;
             _prograss.Visible = !_mf.Visible;
-            _mf.BringToFront();
+            _niLoading.Visible = !_mf.Visible;
+            if (!_mf.Visible)
+            {
+                _prograss.BringToFront();
+                _prograss.Focus();
+            }
+            else
+            {
+                _mf.BringToFront();
+                _mf.Focus();
+            }
 
         }
 
@@ -160,8 +171,10 @@ namespace BlackScreenDetect
 
         private void pictureBox1_MouseHover(object sender, EventArgs e)
         {
-            var tt = new ToolTip();
-            tt.SetToolTip(pictureBox1, "Double Click To Hide / Show Main Window");
+            BringToFront();
+            Focus();
+            _tt.ShowAlways = true;
+            _tt.Show(!_mf.Visible ? _mf.VideoName : "Double Click To Hide Main Window", pictureBox1);
         }
 
         private void Abort_Clicked(object sender, EventArgs e)
@@ -191,6 +204,7 @@ namespace BlackScreenDetect
             _mf.Visible = true;
             _niLoading.Visible = !_mf.Visible;
             _mf.BringToFront();
+            _mf.Focus();
         }
 
         private void Loading_LocationChanged(object sender, EventArgs e)
@@ -211,7 +225,7 @@ namespace BlackScreenDetect
 
             if (Top < Screen.AllScreens[0].Bounds.Top)
                 Top = Screen.AllScreens[0].Bounds.Top;
-            
+
             if (!_isLoaded) return;
             Data.Instance.LoadX = Location.X;
             Data.Instance.LoadY = Location.Y;
@@ -232,7 +246,7 @@ namespace BlackScreenDetect
                         BackColor = Data.Instance.BackColor
                     }
                 };
-                
+
             }
             _prograss.Show(this);
             _prograss.Visible = false;
@@ -242,10 +256,19 @@ namespace BlackScreenDetect
             var y = Data.Instance.LoadY;
             Size = new Size(w, h);
             Location = x == 0 && y == 0
-                ? new Point(_mf.Location.X + (_mf.Width / 2) - (Width / 2), _mf.Location.Y)
+                ? new Point(_mf.Location.X + _mf.Width / 2 - Width / 2, _mf.Location.Y)
                 : new Point(x, y);
             Opacity = Data.Instance.Opacity * 0.01;
             BringToFront();
+            Focus();
+            if (!_mf.Visible)
+            {
+                _prograss.BringToFront();
+                _prograss.Focus();
+                _prograss.Location = new Point(Left, Top - _prograss.Size.Height - 5);
+                _prograss.Visible = !_mf.Visible;
+            }
+
             CheckLoction();
         }
 
@@ -257,7 +280,6 @@ namespace BlackScreenDetect
             Data.Instance.Medium = _tsMedium.Checked;
             Data.Instance.Small = _tsSmall.Checked;
             Data.Instance.Opacity = _tsOpacity.Value;
-            //CheckLoction();
             Data.Instance.LoadX = Location.X;
             Data.Instance.LoadY = Location.Y;
             Data.Save();
@@ -269,7 +291,12 @@ namespace BlackScreenDetect
             _mf.Visible = true;
             _niLoading.Visible = !_mf.Visible;
             _prograss.Visible = !_mf.Visible;
-            _mf.BringToFront();
+            if (_mf.Visible)
+            {
+                _mf.BringToFront();
+                _mf.Focus();
+            }
+            else Focus();
         }
 
         private void _tsComboBox_SelectionChangeCommitted(object sender, EventArgs e)
@@ -306,6 +333,12 @@ namespace BlackScreenDetect
                     _cmsSizes.Close();
                     break;
             }
+        }
+
+        private void _tsBtnProgramSettings_Click(object sender, EventArgs e)
+        {
+            if (new ProgramSettings().ShowDialog(this) != DialogResult.OK)
+                return;
         }
     }
 }

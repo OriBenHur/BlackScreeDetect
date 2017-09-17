@@ -7,6 +7,7 @@ namespace BlackScreenDetect
     {
         private readonly MainForm _mf;
         private readonly Loading _loading;
+        private readonly ToolTip _tt = new ToolTip();
         public Prograss(MainForm form ,Loading loadForm)
         {
             InitializeComponent();
@@ -68,6 +69,14 @@ namespace BlackScreenDetect
         private void Prograss_SizeChanged(object sender, System.EventArgs e)
         {
             if (Visible) CheckLoction();
+        }
+
+        private void label1_MouseHover(object sender, System.EventArgs e)
+        {
+            Focus();
+            BringToFront();
+            _tt.ShowAlways = true;
+            _tt.Show(!_mf.Visible ? _mf.VideoName : "Double Click To Hide Main Window", label1);
         }
     }
 }

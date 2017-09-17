@@ -44,6 +44,7 @@ namespace BlackScreenDetect
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this._tsOpenMain = new System.Windows.Forms.ToolStripMenuItem();
             this._tsComboBox = new System.Windows.Forms.ComboBox();
+            this._tsiSettings = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this._tsOpacity)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
@@ -152,11 +153,17 @@ namespace BlackScreenDetect
             this._tsOpenMain.Size = new System.Drawing.Size(32, 19);
             this._tsOpenMain.Text = "Show Main Window";
             this._tsOpenMain.Click += new System.EventHandler(this.ShowMain_Clicked);
+            //
+            //_tsiSettings
+            //
+            this._tsiSettings.Name = "_tsiSettings";
+            this._tsiSettings.Text = "Show Program Settings";
+            this._tsiSettings.Click += new System.EventHandler(this._tsBtnProgramSettings_Click);
             // 
             // _tsComboBox
             // 
+            this._tsComboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this._tsComboBox.FormattingEnabled = true;
-            this._tsComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             this._tsComboBox.Items.AddRange(new object[] {
             "Transparent Background",
             "Gray Backround",
@@ -174,7 +181,6 @@ namespace BlackScreenDetect
             this.BackColor = System.Drawing.Color.White;
             this.BackgroundImageLayout = System.Windows.Forms.ImageLayout.None;
             this.ClientSize = new System.Drawing.Size(80, 80);
-            //this.Controls.Add(this._tsComboBox);
             this.Controls.Add(this._lbPrograss);
             this.Controls.Add(this.pictureBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -212,7 +218,7 @@ namespace BlackScreenDetect
         private System.Windows.Forms.ToolStripControlHost _tshOpacity;
         public System.Windows.Forms.NotifyIcon _niLoading;
         private System.Windows.Forms.ToolStripMenuItem _tsOpenMain;
-        //private System.Windows.Forms.ToolStripMenuItem _tsiBlack;
+        private System.Windows.Forms.ToolStripMenuItem _tsiSettings;
         //private System.Windows.Forms.ToolStripMenuItem _tsiWhite;
 
         private System.Windows.Forms.ToolStripControlHost _tshComboBox;

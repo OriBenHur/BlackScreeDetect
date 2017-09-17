@@ -30,7 +30,15 @@ namespace BlackScreenDetect
         private static Loading _loadForm;
         private int _abort;
         private int _done;
-        //private int _index;
+        private bool _initialized;
+        private double Time { get; set; }
+        public string Percentage { get; private set; }
+        public string VideoName { get; private set; }
+        private string _text;
+        private int _drog;
+        private bool _isDrog;
+
+
         public MainForm()
         {
             InitializeComponent();
@@ -198,8 +206,6 @@ namespace BlackScreenDetect
             InitializeUi();
         }
 
-        private bool _initialized;
-
         private void MainForm_Load(object sender, EventArgs e)
         {
             if (_initialized) return;
@@ -218,7 +224,6 @@ namespace BlackScreenDetect
             Log("Saved settings.");
         }
 
-        private string _text;
         private void processToolStripButton_Click(object sender, EventArgs e)
         {
             if (SelectedItems == null)
@@ -253,7 +258,8 @@ namespace BlackScreenDetect
                 while (_bwProcess.IsBusy || _bwLoading.IsBusy)
                     Application.DoEvents();
                 if (_loadForm.IsAbortAll) break;
-                _text = Log($@"Start Processing {Path.GetFileNameWithoutExtension(selectedItem)}");
+                VideoName = Path.GetFileNameWithoutExtension(selectedItem);
+                _text = Log($@"Start Processing {VideoName}");
                 _bwLoading.RunWorkerAsync();
                 _bwProcess.RunWorkerAsync(selectedItem);
             }
@@ -276,6 +282,7 @@ namespace BlackScreenDetect
                 _loadForm._niLoading.Visible = false;
                 if (!Visible) Visible = true;
                 BringToFront();
+                Focus();
                 Log("All the processes have been aborted", Data.Instance.ErrorColor);
                 _loadForm.IsAbortAll = false;
                 _loadForm.IsAbort = false;
@@ -288,6 +295,7 @@ namespace BlackScreenDetect
                 _loadForm._niLoading.Visible = false;
                 if (!Visible) Visible = true;
                 BringToFront();
+                Focus();
                 Log("All pending processes have been aborted", Data.Instance.ErrorColor);
                 Log($"{SelectedItems.Length - _abort} reports have been saved to: {Data.Instance.OutputFolder}", Data.Instance.InfoColor);
                 _loadForm.IsAbortAll = false;
@@ -302,6 +310,7 @@ namespace BlackScreenDetect
             _loadForm._niLoading.Visible = false;
             if (!Visible) Visible = true;
             BringToFront();
+            Focus();
             string msg;
             Color color;
 
@@ -313,7 +322,6 @@ namespace BlackScreenDetect
 
             else
             {
-
                 msg = $"Done Processing {_done} Items out of {SelectedItems.Length} Items";
                 color = Data.Instance.WarrningColor;
             }
@@ -326,13 +334,10 @@ namespace BlackScreenDetect
             startSoundPlayer.Play();
         }
 
-        private double Time { get; set; }
-        public string Percentage { get; private set; }
-        private string VideoName { get; set; }
+
 
         private void _bwProcess_DoWork(object sender, DoWorkEventArgs e)
         {
-
             using (var psExec = PowerShell.Create())
             {
                 var startTime = DateTime.Now.TimeOfDay;
@@ -341,13 +346,12 @@ namespace BlackScreenDetect
                 var picThreshold = Data.Instance.PicThreshold ?? "0.98";
                 var pixThreshold = Data.Instance.PixThreshold ?? "0";
                 var filePath = e.Argument as string;
-                VideoName = Path.GetFileNameWithoutExtension(filePath);
                 var validateScript = $@"{ffmpeg}\ffprobe.exe -stats -i '{filePath}' 2>&1";
                 psExec.AddScript(validateScript);
                 var valid = psExec.Invoke<string>().ToList();
                 if (valid.Any(item => item.Contains("Invalid data found")))
                 {
-                    Log($@"{VideoName} is Invalid Media File", Data.Instance.ErrorColor);
+                    Log($@"{Path.GetFileName(filePath)} is Invalid Media File", Data.Instance.ErrorColor);
                     return;
                 }
                 psExec.Commands.Clear();
@@ -414,11 +418,11 @@ namespace BlackScreenDetect
                 var endTime = DateTime.Now.TimeOfDay;
                 var timeItTookSpan = (endTime - startTime).TotalSeconds;
                 var time = TimeSpan.FromSeconds(timeItTookSpan);
-                var timeFormat = timeItTookSpan >= 360
-                    ? $@"{time.Hours:00}:{time.Minutes:00}:{time.Seconds:00}.{time.Milliseconds:000} Hours"
-                    : timeItTookSpan >= 60
+                var timeFormat = timeItTookSpan < 60
+                    ? $@"{time.Seconds:00}.{time.Milliseconds:000} Seconds"
+                    : timeItTookSpan < 3600
                         ? $@"{time.Minutes:00}:{time.Seconds:00}.{time.Milliseconds:000} Minutes"
-                        : $@"{time.Seconds:00}.{time.Milliseconds:000} Seconds";
+                        : $@"{time.Hours:00}:{time.Minutes:00}:{time.Seconds:00}.{time.Milliseconds:000} Hours";
                 _rtbLog.Invoke(() =>
                 {
                     ChangeLine(_rtbLog, _rtbLog.Lines.Length - 2, $@"{_text} [100%]");
@@ -430,17 +434,16 @@ namespace BlackScreenDetect
 
         private static void ChangeLine(TextBoxBase rtb, int line, string text)
         {
-
-            var s1 = rtb.GetFirstCharIndexFromLine(line);
-            var s2 = line < rtb.Lines.Length - 1 ? rtb.GetFirstCharIndexFromLine(line + 1) - 1 : rtb.Text.Length;
-            rtb.Select(s1, s2 - s1);
+            var s1 = rtb.Text.IndexOf(rtb.Lines[line], StringComparison.Ordinal);
+            var s2 = rtb.TextLength - 1 - s1;
+            rtb.Select(s1, s2);
             rtb.SelectedText = text;
-
         }
         private void _bwProcess_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             Invoke(new MethodInvoker(delegate
             {
+                Percentage = "";
                 _loadForm.Close();
             }));
         }
@@ -506,8 +509,6 @@ namespace BlackScreenDetect
             e.Effect = e.Data.GetDataPresent(DataFormats.FileDrop) ? DragDropEffects.All : DragDropEffects.None;
         }
 
-        private int _drog;
-        private bool _isDrog;
         private void _listBoxWatchedItems_DragDrop(object sender, DragEventArgs e)
         {
             var s = (string[])e.Data.GetData(DataFormats.FileDrop, false);
@@ -541,18 +542,6 @@ namespace BlackScreenDetect
             Data.Save();
             Log($@"{_drog} items were added to list", Data.Instance.SuccessColor);
             InitializeUi();
-
-            //int i;
-            //for (i = 0; i < s.Length; i++)
-            //{
-            //    if(s[i] is Directory) Filtered_List(GetFiles(s[i]))
-            //    _listBoxWatchedItems.Items.Add(s[i]);
-            //    var str = s[i];
-            //    if (str != null && !Data.Instance.WatchedFolders.Contains(str))
-            //        Data.Instance.WatchedFolders.Add(str);
-            //}
-            //Data.Save();
-
         }
         private void _listBoxWatchedItems_MouseDown(object sender, MouseEventArgs e)
         {
